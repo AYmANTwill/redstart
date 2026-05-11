@@ -563,6 +563,185 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+
+    Avec $\phi = 0$ et donc $\theta = 0$ (aucune force d'inclinaison), la dynamique verticale se réduit à :
+
+    $$
+    \ddot{y} = \frac{f(t)}{M} - g
+    $$
+
+    On veut amener le système de l’état initial $(y_0,\dot y_0) = (10,-2)$ vers l’état final $(y_f,\dot y_f) = (1,0)$ à $t=5$.
+
+    ---
+
+    ## Stratégie — planification de trajectoire polynomiale
+
+    On choisit une trajectoire de référence $y_r(t)$ sous forme d’un polynôme cubique satisfaisant les quatre conditions aux limites :
+
+    $$
+    y_r(t)=a_0+a_1 t+a_2 t^2+a_3 t^3
+    $$
+
+    ### Conditions aux limites
+
+    - $y_r(0)=10 \Rightarrow a_0=10$
+    - $\dot y_r(0)=-2 \Rightarrow a_1=-2$
+    - $y_r(5)=1 \Rightarrow 10-10+25a_2+125a_3=1$
+    - $\dot y_r(5)=0 \Rightarrow -2+10a_2+75a_3=0$
+
+    On obtient donc le système linéaire :
+
+    $$
+    25a_2+125a_3=-9,
+    \qquad
+    10a_2+75a_3=2
+    $$
+
+    La résolution donne :
+
+    $$
+    a_2=-\frac{47}{50},
+    \qquad
+    a_3=\frac{18}{250}=\frac{9}{125}
+    $$
+
+    ---
+
+    ## Trajectoire obtenue
+
+    La trajectoire de référence est alors :
+
+    $$
+    y_r(t)=10-2t-\frac{47}{50}t^2+\frac{9}{125}t^3
+    $$
+
+    Sa dérivée seconde vaut :
+
+    $$
+    \ddot y_r(t)=2a_2+6a_3 t
+    $$
+
+    ---
+
+    ## Force de commande nécessaire
+
+    La force à appliquer est donc :
+
+    $$
+    f(t)=M\bigl(\ddot y_r(t)+g\bigr)
+    $$
+
+    c’est-à-dire :
+
+    $$
+    f(t)=M\left(2a_2+6a_3 t+g\right)
+    $$
+
+    ou encore, en remplaçant $a_2$ et $a_3$ :
+
+    $$
+    f(t)
+    =
+    M\left(
+    -\frac{47}{25}
+    +\frac{54}{125}t
+    +g
+    \right)
+    $$
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, np, plt, redstart_solve):
+    def controlled_landing():
+            t_span = [0.0, 5.0]
+            tf = 5.0
+            y0_val = 10.0
+            vy0_val = -2.0
+            yf_val = l / 2       # = 1.0 (à ras du sol)
+            vyf_val = 0.0
+
+            # Résoudre pour un polynome de degré 3
+            # y_r(t) = a0 + a1*t + a2*t^2 + a3*t^3
+            a0 = y0_val
+            a1 = vy0_val
+            # 25*a2 + 125*a3 = yf - a0 - a1*tf
+            # 10*a2 +  75*a3 = vyf - a1
+            rhs1 = yf_val - a0 - a1 * tf          # = 1 - 10 + 10 = 1
+            rhs2 = vyf_val - a1                    # = 0 + 2 = 2
+            A_mat = np.array([[tf**2, tf**3], [2*tf, 3*tf**2]])
+            a2, a3 = np.linalg.solve(A_mat, [rhs1, rhs2])
+
+            def y_ref(t):
+                return a0 + a1*t + a2*t**2 + a3*t**3
+
+            def vy_ref(t):
+                return a1 + 2*a2*t + 3*a3*t**2
+
+            def ay_ref(t):
+                return 2*a2 + 6*a3*t
+
+            def f_controlled(t):
+                # f de telle sorte que ay = f/M - g => f = M*(ay + g)
+                force = M * (ay_ref(t) + g)
+                return max(force, 0.0)  
+
+            def f_phi(t, y):
+                return np.array([f_controlled(t), 0.0])  # phi=0
+
+            y0 = [0.0, 0.0, y0_val, vy0_val, 0.0, 0.0]
+            sol = redstart_solve(t_span, y0, f_phi)
+
+            t = np.linspace(0, 5, 1000)
+            state = sol(t)
+            y_sim = state[2]
+            vy_sim = state[3]
+            f_vals = np.array([f_controlled(ti) for ti in t])
+            y_ref_vals = np.array([y_ref(ti) for ti in t])
+
+            fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+            axes[0].plot(t, y_sim, label="$y(t)$ simulé", color="royalblue", lw=2)
+            axes[0].plot(t, y_ref_vals, label="$y_r(t)$ de réference", color="orange",
+                         ls="--", lw=1.5)
+            axes[0].axhline(l / 2, color="grey", ls=":", label=r"$y = \ell/2$ (ground)")
+            axes[0].set_title("Hauteur $y(t)$")
+            axes[0].set_xlabel("temps $t$ (s)")
+            axes[0].set_ylabel("hauteur (m)")
+            axes[0].legend(fontsize=8)
+            axes[0].grid(True, alpha=0.3)
+
+            axes[1].plot(t, vy_sim, color="green", lw=2)
+            axes[1].axhline(0, color="grey", ls="--")
+            axes[1].set_title("Vitesse verticale $\\dot{y}$")
+            axes[1].set_xlabel("temps $t$ (s)")
+            axes[1].set_ylabel("vitesse $v_y(t)$ (m/s)")
+            axes[1].grid(True, alpha=0.3)
+
+            axes[2].plot(t, f_vals, color="tomato", lw=2)
+            axes[2].axhline(M * g, color="grey", ls="--", label="$f = Mg$")
+            axes[2].set_title("Force $f(t)$")
+            axes[2].set_xlabel("temps $t$ (s)")
+            axes[2].set_ylabel("force (N)")
+            axes[2].legend(fontsize=8)
+            axes[2].grid(True, alpha=0.3)
+
+            fig.suptitle("Contrôle d'atterissage", fontsize=13, fontweight="bold")
+            fig.tight_layout()
+
+            final = sol(5.0)
+
+            return fig
+
+    controlled_landing()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # Animations
 
     It's very handy to visualize the evolution of our booster "as a movie"!
