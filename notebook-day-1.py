@@ -132,7 +132,7 @@ def _(mo):
 def _():
     g = 1.0   # gravité en m/s²
     M = 1.0   # masse du booster en kg
-    l = 1.0   # demi-longueur du booster en m (longueur totale = 2l = 2 m)
+    l = 2.0   # longueur du booster
     return
 
 
@@ -169,9 +169,9 @@ def _(mo):
 
     **Vérifications de cohérence :**
 
-    - Si $\theta = 0$ et $\phi = 0$ : la force est verticale vers le haut. On a bien $f_x = 0$ et $f_y = +f$ ✓
-    - Si $\theta = 0$ et $\phi = +\pi/2$ : la force pointe vers la gauche. On a bien $f_x = -f$ et $f_y = 0$ ✓
-    - Si $\theta = +\pi/2$ (booster couché à gauche) et $\phi = 0$ : la force pointe vers la gauche. On a bien $f_x = -f$ et $f_y = 0$ ✓
+    - Si $\theta = 0$ et $\phi = 0$ : la force est verticale vers le haut. On a bien $f_x = 0$ et $f_y = +f$
+    - Si $\theta = 0$ et $\phi = +\pi/2$ : la force pointe vers la gauche. On a bien $f_x = -f$ et $f_y = 0$
+    - Si $\theta = +\pi/2$ (booster couché à gauche) et $\phi = 0$ : la force pointe vers la gauche. On a bien $f_x = -f$ et $f_y = 0$
     """)
     return
 
@@ -202,6 +202,11 @@ def _(np):
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -223,10 +228,10 @@ def _(mo):
     M \, \ddot{\vec{r}} = \sum \vec{F}_{\text{ext}}
     $$
 
-    où $\vec{r} = (x, y)^T$ est la position du centre de masse, et les forces extérieures sont :
+    où $\vec{r}$ est la position du centre de masse, et les forces extérieures sont :
 
     - la **gravité** : $\vec{F}_g = (0, -Mg)^T$
-    - la **poussée du réacteur** : $\vec{F}_r = \big(-f \sin(\theta + \phi),\ +f \cos(\theta + \phi)\big)^T$
+    - la **poussée du réacteur** : $\vec{F}_r = \big(-f \sin(\theta + \phi),\ f \cos(\theta + \phi)\big)^T$
 
     (On néglige la friction de l'air comme indiqué dans l'énoncé.)
 
@@ -239,30 +244,11 @@ def _(mo):
     \end{aligned}
     $$
 
-    **Écriture matricielle compacte.** En introduisant la matrice de rotation d'angle $\alpha$ :
+    ce qui permet d'écrire le système sous forme matricielle :
 
     $$
-    R(\alpha) = \begin{pmatrix} \cos\alpha & -\sin\alpha \\ \sin\alpha & \cos\alpha \end{pmatrix}
+    \boxed{\;\begin{pmatrix} \ddot{x} \\ \ddot{y} \end{pmatrix} = \dfrac{f}{M}\, \begin{pmatrix} -\sin(\theta+\phi) \\ \cos(\theta+\phi) \end{pmatrix} + \begin{pmatrix} 0 \\ -g \end{pmatrix}\;}
     $$
-
-    on remarque que :
-
-    $$
-    R(\theta + \phi) \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} -\sin(\theta+\phi) \\ \cos(\theta+\phi) \end{pmatrix}
-    $$
-
-    ce qui permet d'écrire le système sous la forme matricielle élégante :
-
-    $$
-    \boxed{\;\begin{pmatrix} \ddot{x} \\ \ddot{y} \end{pmatrix} = \dfrac{f}{M}\, R(\theta + \phi) \begin{pmatrix} 0 \\ 1 \end{pmatrix} + \begin{pmatrix} 0 \\ -g \end{pmatrix}\;}
-    $$
-
-    **Interprétation géométrique.** Cette formulation exprime que l'accélération du centre de masse est la somme :
-
-    - d'une **poussée** d'intensité $f/M$ dirigée selon l'axe du booster **tourné** de l'angle $\theta + \phi$ (composition rotation booster + orientation réacteur),
-    - de la **gravité** $-g$ selon $\vec{e}_y$.
-
-    On retrouve le principe fondamental sous une forme indépendante du repère.
     """)
     return
 
