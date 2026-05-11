@@ -133,7 +133,7 @@ def _():
     g = 1.0   # gravité en m/s²
     M = 1.0   # masse du booster en kg
     l = 2.0   # longueur du booster
-    return
+    return M, l
 
 
 @app.cell(hide_code=True)
@@ -263,6 +263,12 @@ def _(mo):
     return
 
 
+@app.cell
+def _(M, l):
+    J = M * l**2 / 12
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -270,6 +276,11 @@ def _(mo):
 
     Give the ordinary differential equation that governs the evolution of the tilt angle $\theta$.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     return
 
 
