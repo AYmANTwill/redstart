@@ -280,7 +280,91 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _():
+def _(mo):
+    mo.md(r"""
+    ### 📝 Réponse
+
+    D'après le **théorème du moment cinétique** appliqué au centre de masse du booster (corps rigide en rotation 2D) :
+
+    $$
+    J \, \ddot{\theta} = \tau
+    $$
+
+    où $\tau$ est le couple résultant des forces extérieures par rapport au centre de masse.
+
+    **Calcul du couple.**
+
+    - La **gravité** s'applique au centre de masse : son bras de levier est nul, donc elle ne crée **aucun couple**.
+    - La **poussée du réacteur** s'applique au point $P$ situé à la **base** du booster, soit à une distance $\ell/2$ du centre de masse, dans la direction $-\vec{e}_{\text{booster}}$.
+
+    Le vecteur position du point d'application (depuis le centre de masse) est :
+
+    $$
+    \vec{r}_P = -\dfrac{\ell}{2} \begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} = \dfrac{\ell}{2} \begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix}
+    $$
+
+    Le vecteur force du réacteur est :
+
+    $$
+    \vec{F}_r = f \begin{pmatrix} -\sin(\theta + \phi) \\ \cos(\theta + \phi) \end{pmatrix}
+    $$
+
+    Le couple (composante $z$ du produit vectoriel) vaut :
+
+    $$
+    \tau = \vec{r}_P \wedge \vec{F}_r = r_{P,x}\, F_{r,y} - r_{P,y}\, F_{r,x}
+    $$
+
+    $$
+    \tau = \dfrac{\ell}{2} \sin\theta \cdot f \cos(\theta+\phi) - \left(-\dfrac{\ell}{2}\cos\theta\right) \cdot \left(-f \sin(\theta+\phi)\right)
+    $$
+
+    $$
+    \tau = \dfrac{f\ell}{2}\,\big[\sin\theta \cos(\theta+\phi) - \cos\theta \sin(\theta+\phi)\big]
+    $$
+
+    En utilisant l'identité $\sin(a-b) = \sin a \cos b - \cos a \sin b$ avec $a = \theta$ et $b = \theta + \phi$ :
+
+    $$
+    \tau = \dfrac{f\ell}{2}\,\sin(-\phi) = -\dfrac{f\ell}{2}\,\sin\phi
+    $$
+
+    **EDO du tilt :**
+
+    $$
+    \boxed{\; J\,\ddot{\theta} = -\dfrac{f\ell}{2}\,\sin\phi \;}
+    $$
+
+    soit, en remplaçant $J = M\ell^2/12$ :
+
+    $$
+    \boxed{\; \ddot{\theta} = -\dfrac{6 f}{M\ell}\,\sin\phi \;}
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 🔍 Commentaire
+
+    **Le résultat ne dépend que de $\phi$, pas de $\theta$.** C'est intuitif : le couple du réacteur sur la fusée dépend seulement de l'angle entre la force et l'axe du booster, pas de l'orientation absolue de l'ensemble dans l'espace. Cette propriété traduit l'**isotropie** du couple par rapport au repère propre du booster.
+
+    **Signe du couple.**
+
+    - Si $\phi > 0$ (réacteur dévié vers la gauche) → $\ddot{\theta} < 0$ → le booster tourne dans le **sens horaire** (vers la droite).
+    - Si $\phi < 0$ (réacteur dévié vers la droite) → $\ddot{\theta} > 0$ → le booster tourne dans le **sens trigo** (vers la gauche).
+
+    Cela correspond bien au principe physique : la poussée du réacteur fait **pivoter** le booster dans le sens **opposé** à la déviation du jet. C'est exactement le mécanisme de contrôle utilisé sur les vraies fusées (gimbal thrust vectoring).
+
+    **Cas particuliers utiles pour la suite :**
+
+    - $\phi = 0$ (poussée axiale) : $\ddot{\theta} = 0$. Le booster ne tourne pas.
+    - $\phi = \pm\pi/2$ : couple maximal en amplitude $\pm f\ell/(2J)$.
+
+    **Lien avec le contrôle.** L'angle $\phi$ est notre **entrée de commande** pour orienter le booster. C'est l'analogue de la "barre" sur un bateau : on dévie le flux pour créer un couple.
+    """)
     return
 
 
