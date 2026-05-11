@@ -64,6 +64,7 @@ def _(mo):
 def _():
     import scipy
     import scipy.integrate as sci
+    from scipy.integrate import solve_ivp
 
     import matplotlib as mpl
     import matplotlib.pyplot as plt
@@ -71,7 +72,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return (np,)
+    return np, plt, solve_ivp
 
 
 @app.cell(hide_code=True)
@@ -259,6 +260,18 @@ def _(mo):
     ## 🧩 Moment of inertia
 
     Compute the [moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia) $J$ of the booster and define the corresponding Python variable `J`.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Le booster est modélisé par une tige rigide, de longueur $\ell$, de masse $M$ et de section négligeable. Le moment d'inertie par rapport à son centre d'inertie est donné par :
+
+    $$
+    J=\frac{M \ell^2}{12}
+    $$
     """)
     return
 
@@ -462,7 +475,7 @@ def _(M, g, l, np, solve_ivp):
         result = solve_ivp(dynamics, t_span, y0, method='RK45', dense_output=True, rtol=1e-8, atol=1e-8)
         return result.sol
 
-    return
+    return (redstart_solve,)
 
 
 @app.cell(hide_code=True)
@@ -476,6 +489,60 @@ def _(mo):
 
     Check your `redstart_solve` function in this scenario and produce a graph that allows us to check the above answer numerically/visually.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Answer
+
+    In free fall with $f = 0$, the vertical motion obeys:
+
+    $$
+    y(t) = y_0 + v_y(0)\,t - \frac{1}{2}g\,t^2 = 10 - \frac{1}{2}t^2
+    $$
+
+    Setting $y(t_f) = \ell = 2 \text{ m}$ :
+
+    $$
+    10 - \frac{1}{2}(t_f)^2 = 2 \implies (t_f)^2 = 16 \implies t_f = 4 \,\text{ s}
+    $$
+    """)
+    return
+
+
+@app.cell
+def _(l, np, plt, redstart_solve):
+    def free_fall_example():
+            t_span = [0.0, 5.0]
+            y0 = [0.0, 0.0, 10.0, 0.0, 0.0, 0.0]  # [x, vx, y, vy, theta, omega]
+
+            def f_phi(t, y):
+                return np.array([0.0, 0.0])  # no thrust
+
+            sol = redstart_solve(t_span, y0, f_phi)
+
+            t = np.linspace(t_span[0], t_span[1], 1000)
+            y_t = sol(t)[2]  # index 2 = y position
+
+            t_f = 4
+
+            fig, ax = plt.subplots(figsize=(8, 4))
+            ax.plot(t, y_t, label=r"$y(t)$ (hauteur en mètres)", color="royalblue", lw=2)
+            ax.axhline(l, color="grey", ls="--", label=rf"$y = \ell = {l}$ m")
+            ax.axvline(t_f, color="tomato", ls=":", lw=1.5,
+                       label=rf"$t_f = 4$ s")
+            ax.scatter([t_f], [l], color="tomato", zorder=5)
+            ax.set_title("Chute libre — Hauteur du Centre de Masse")
+            ax.set_xlabel("temps $t$ (s)")
+            ax.set_ylabel("hauteur $y$ (m)")
+            ax.grid(True, alpha=0.3)
+            ax.legend()
+            fig.tight_layout()
+            return fig
+
+    free_fall_example()
     return
 
 
