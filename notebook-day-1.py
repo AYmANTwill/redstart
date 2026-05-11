@@ -936,7 +936,6 @@ def _(M, g, l, np, svg):
         flame_length = (l / 2) * (f / (M * g)) if f > 0 else 0.0
         flame_w = 0.10
 
-
         # Corps du booster (centré à l'origine locale)
         body = svg.rect(
             x=-body_w / 2,
@@ -956,23 +955,22 @@ def _(M, g, l, np, svg):
             fill="#000000",
         )()
     
-        # On fait tourner le rectangle de flamme de phi autour du point d'attache à la base.
         if flame_length > 0:
             flame_rect = svg.rect(
                 x=-flame_w / 2,
                 y=-l/2,               # part de la base
                 width=flame_w,
-                height=flame_length,
+                height=flame_length,  # s'étend vers le bas (y négatif)
                 fill="#f97316",
                 opacity="0.85",
             )()
-            # rotation de la flamme de phi (CCW) autour du point de base (0, -l/2)
-            flame_group = svg.g(transform=f"rotate({np.degrees(-phi)}, 0, {-l/2})")(flame_rect)
+            # Rotation de la flamme de phi autour du point de base (0, -l/2)
+            # phi > 0 tourne dans le sens CCW (trigo positif)
+            flame_group = svg.g(transform=f"rotate({np.degrees(phi+np.pi)}, 0, {-l/2})")(flame_rect)
         else:
             flame_group = svg.g()()
 
         # Assemblage des parties dans le repère local, puis application position + inclinaison
-        # theta est l'angle CCW depuis la verticale → on tourne de -theta degrés
         booster_group = svg.g(
             transform=f"translate({x},{y}) rotate({np.degrees(-theta)}, 0, 0)"
         )(flame_group, body, nose)
@@ -1001,7 +999,7 @@ def _(M, booster, g, l, mo, np, world):
             mo.Html(
                 world(
                     [-3, 3, -2, 4],
-                    booster(-l/2, l, np.pi / 4, 2 * M * g, np.pi / 2),
+                    booster(-l/2, l, np.pi / 4, 2 * M * g, np.pi / 4),
                 )
             ),
         ],
@@ -1086,7 +1084,10 @@ def _(M, g, l, np):
         flame_lengths  = [(l / 2) * (fv / (M * g)) if fv > 0 else 0.0 for fv in fs]
         flame_len_vals = ";".join(f"{fl:.4f}" for fl in flame_lengths)
         # Rotation de la flamme autour de la base (0, -l/2)
-        flame_phi_vals = ";".join(f"{np.degrees(-pv):.4f},0,{-l/2}" for pv in phis)
+        flame_phi_vals = ";".join(
+            f"{np.degrees(pv + np.pi):.4f},0,{-l/2}"
+            for pv in phis
+        )
 
         svg_str = f"""
     <g>
