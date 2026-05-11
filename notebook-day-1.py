@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return
+    return (np,)
 
 
 @app.cell(hide_code=True)
@@ -130,12 +130,9 @@ def _(mo):
 
 @app.cell
 def _():
-    def _():
-        g = 1.0   # gravité en m/s²
-        M = 1.0   # masse du booster en kg
-        l = 1.0   # demi-longueur du booster en m (longueur totale = 2l = 2 m)
-        return g, M, l
-
+    g = 1.0   # gravité en m/s²
+    M = 1.0   # masse du booster en kg
+    l = 1.0   # demi-longueur du booster en m (longueur totale = 2l = 2 m)
     return
 
 
@@ -146,6 +143,56 @@ def _(mo):
 
     Compute the cartesian coordinates $f_x$ and $f_y$ of the force applied to the booster by the reactor, functions of $f$, $\theta$ and $\phi$.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Réponse
+
+    Le réacteur est situé à la base du booster. Considérons les repères :
+
+    - L'**axe du booster** fait un angle $\theta$ avec la verticale (sens trigonométrique positif).
+    - La **force du réacteur** fait un angle $\phi$ avec l'axe du booster (sens trigonométrique positif).
+
+    Ainsi, l'angle total entre la force $\vec{f}$ et la **verticale** (axe $y$) est $\theta + \phi$.
+
+    En projetant la force $\vec{f}$ (de norme $f \geq 0$) sur les axes cartésiens, on obtient :
+
+    $$
+    \begin{aligned}
+    f_x &= -f \sin(\theta + \phi) \\
+    f_y &= +f \cos(\theta + \phi)
+    \end{aligned}
+    $$
+    """)
+    return
+
+
+@app.cell
+def _(np):
+    def reactor_force(f, theta, phi):
+        """
+        Composantes cartésiennes de la force du réacteur.
+
+        Paramètres
+        ----------
+        f : Amplitude de la force du réacteur (f >= 0).
+        
+        theta : Angle du booster par rapport à la verticale (rad, trigo positif).
+        
+        phi : Angle de la force par rapport à l'axe du booster (rad, trigo positif).
+        
+        Retours
+        -------
+        (fx, fy) : tuple de float
+            Composantes cartésiennes de la force.
+        """
+        fx = -f * np.sin(theta + phi)
+        fy = +f * np.cos(theta + phi)
+        return fx, fy
+
     return
 
 
