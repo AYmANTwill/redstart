@@ -1058,6 +1058,97 @@ def _(mo):
     return
 
 
+@app.cell
+def _(M, g, l, np):
+    def booster_anim(x_fn, y_fn, theta_fn, f_fn, phi_fn, T, n_frames=60):
+        times = np.linspace(0, T, n_frames + 1)
+        dur = f"{T}s"
+        key_times = ";".join(f"{t/T:.4f}" for t in times)
+
+        # Échantillonnage de tous les paramètres à chaque keyframe
+        xs     = [x_fn(t)     for t in times]
+        ys     = [y_fn(t)     for t in times]
+        thetas = [theta_fn(t) for t in times]
+        fs     = [f_fn(t)     for t in times]
+        phis   = [phi_fn(t)   for t in times]
+
+        # Dimensions
+        body_w = 0.15
+        body_h = l        # hauteur totale 
+        nose_h = 0.15
+
+        # Valeurs de translation et rotation pour chaque keyframe
+        translate_vals = ";".join(f"{x},{y}" for x, y in zip(xs, ys))
+        # Rotation : -theta degrés (car l'axe y est retourné en SVG)
+        rotate_vals = ";".join(f"{np.degrees(-th)},0,0" for th in thetas)
+
+        # Longueur de flamme et rotation phi à chaque keyframe
+        flame_lengths  = [(l / 2) * (fv / (M * g)) if fv > 0 else 0.0 for fv in fs]
+        flame_len_vals = ";".join(f"{fl:.4f}" for fl in flame_lengths)
+        # Rotation de la flamme autour de la base (0, -l/2)
+        flame_phi_vals = ";".join(f"{np.degrees(-pv):.4f},0,{-l/2}" for pv in phis)
+
+        svg_str = f"""
+    <g>
+      <!-- Translation de l'ensemble du booster -->
+      <animateTransform attributeName="transform" type="translate"
+        values="{translate_vals}" keyTimes="{key_times}"
+        dur="{dur}" repeatCount="indefinite" calcMode="linear"/>
+      <g>
+        <!-- Rotation du booster autour de son centre de masse -->
+        <animateTransform attributeName="transform" type="rotate"
+          values="{rotate_vals}" keyTimes="{key_times}"
+          dur="{dur}" repeatCount="indefinite" calcMode="linear"/>
+
+        <!-- Flamme (sous la base en y local = -l/2) -->
+        <g>
+          <animateTransform attributeName="transform" type="rotate"
+            values="{flame_phi_vals}" keyTimes="{key_times}"
+            dur="{dur}" repeatCount="indefinite" calcMode="linear"/>
+          <rect x="{-0.10/2}" y="{-l/2}" width="0.10" height="0" fill="#f97316" opacity="0.85">
+            <animate attributeName="height"
+              values="{flame_len_vals}" keyTimes="{key_times}"
+              dur="{dur}" repeatCount="indefinite" calcMode="linear"/>
+          </rect>
+        </g>
+
+        <!-- Corps du booster -->
+        <rect x="{-body_w/2}" y="{-l/2}" width="{body_w}" height="{body_h}"
+              fill="#94a3b8" stroke="#475569" stroke-width="0.01" rx="0.04"/>
+
+        <!-- Cône de nez -->
+        <polygon points="{-body_w/2},{l/2} {body_w/2},{l/2} 0,{l/2+nose_h}" fill="#ef4444"/>
+      </g>
+    </g>
+    """
+        return svg_str
+
+    return (booster_anim,)
+
+
+@app.cell
+def _(M, booster_anim, g, l, mo, np, world):
+    def booster_anim_0():
+        T = 5.0
+        def x(t):
+            return -l/2 + l * (t / T)
+        def y(t):
+            return l/2 + l/2 * (t / T)
+        def theta(t):
+            return (t / T) * 2 * np.pi
+        def f(t):
+            return M * g * (t / T)
+        def phi(t):
+            return 2 * np.pi * (t / T)
+        return booster_anim(x, y, theta, f, phi, T=T)
+
+    mo.Html(
+        world([-3, 3, -2, 4], booster_anim_0())
+    ).center()
+
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -1073,6 +1164,123 @@ def _(mo):
 
     4. The "controlled landing" scenario (see above).
     """)
+    return
+
+
+@app.cell
+def _(M, booster_anim, g, l, np, redstart_solve, world):
+    def make_anim(y0_state, f_phi_fn, t_span=(0.0, 5.0), view=[-3, 3, -2, 12]):
+        sol = redstart_solve(t_span, y0_state, f_phi_fn)
+    
+        # Trouver quand le booster atteint le sol
+        T = t_span[1] - t_span[0]
+        t_eval = np.linspace(t_span[0], t_span[1], 1000)
+        y_vals = sol(t_eval)[2]
+    
+        # Chercher le moment où y atteint l/2 
+        ground_idx = np.where(y_vals <= l/2)[0]
+        if len(ground_idx) > 0:
+            T = t_eval[ground_idx[0]]  # s'arrêter au premier contact avec le sol
+            if T == t_span[0]:  # éviter T=0
+                T = t_span[1] - t_span[0]
+    
+        def x_fn(t):     
+            if t <= T:
+                return float(sol(t)[0])
+            else:
+                return float(sol(T)[0])
+        def y_fn(t):     
+            if t <= T:
+                return float(sol(t)[2])
+            else:
+                return float(sol(T)[2])
+        def theta_fn(t): 
+            if t <= T:
+                return float(sol(t)[4])
+            else:
+                return float(sol(T)[4])
+        def f_fn(t):
+            if t <= T:
+                return float(f_phi_fn(t, sol(t))[0])
+            else:
+                return 0.0  # plus de poussée après l'atterrissage
+        def phi_fn(t):
+            if t <= T:
+                return float(f_phi_fn(t, sol(t))[1])
+            else:
+                return 0.0
+
+        anim = booster_anim(x_fn, y_fn, theta_fn, f_fn, phi_fn, T=t_span[1] - t_span[0])
+        return world(view, anim)
+
+    # ── Scenario 1 : Chute libre ────────────────────────────────────────────────
+    def fp1(t, y) : 
+        return np.array([0.0, 0.0])
+    anim1 = make_anim([0.0, 0.0, 10.0, 0.0, 0.0, 0.0], fp1)
+
+    # ── Scenario 2 : ───────────
+    def fp2(t, y): 
+        return np.array([M * g, 0.0])
+    anim2 = make_anim([0.0, 0.0, 10.0, 0.0, 0.0, 0.0], fp2)
+
+    # ── Scenario 3 :  ─────────────────────────────────
+    def fp3(t, y): 
+        return np.array([M * g, np.pi / 8])
+    anim3 = make_anim([0.0, 0.0, 10.0, 0.0, 0.0, 0.0], fp3, view=[-6, 6, -2, 12])
+
+    # ── Scenario 4 : ───────────────────────────────────────
+    tf_c = 5.0
+    a0_c, a1_c = 10.0, -2.0
+    yf_c = l / 2
+    A_c = np.array([[tf_c**2, tf_c**3], [2*tf_c, 3*tf_c**2]])
+    a2_c, a3_c = np.linalg.solve(A_c, [yf_c - a0_c - a1_c*tf_c, 0.0 - a1_c])
+
+    def f_landing(t):
+        ay = 2*a2_c + 6*a3_c*t
+        return float(max(M * (ay + g), 0.0))
+
+    def fp4(t, y): return np.array([f_landing(t), 0.0])
+    anim4 = make_anim([0.0, 0.0, 10.0, -2.0, 0.0, 0.0], fp4)
+    return anim1, anim2, anim3, anim4
+
+
+@app.cell
+def _(anim1, mo):
+    #Scénario1
+
+    mo.Html(anim1).center()
+    return
+
+
+@app.cell
+def _(anim2, mo):
+    #Scénario2
+
+    mo.Html(anim2).center()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Résultat logique pour le scénario 2, car $\vec{f} + \vec{P}=\vec{0}$:.
+    """)
+    return
+
+
+@app.cell
+def _(anim3, mo):
+    #Scénario3
+
+    mo.Html(anim3).center()
+    return
+
+
+@app.cell
+def _(anim4, mo):
+    #Scénario4
+
+    mo.Html(anim4).center()
     return
 
 
