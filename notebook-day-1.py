@@ -497,13 +497,13 @@ def _(mo):
     mo.md(r"""
     ### 📝 Answer
 
-    In free fall with $f = 0$, the vertical motion obeys:
+    En chute libre avec $f = 0$, le mouvement vertical est décrit par :
 
     $$
     y(t) = y_0 + v_y(0)\,t - \frac{1}{2}g\,t^2 = 10 - \frac{1}{2}t^2
     $$
 
-    Setting $y(t_f) = \ell = 2 \text{ m}$ :
+    En posant $y(t_f) = \ell = 2 \text{ m}$ :
 
     $$
     10 - \frac{1}{2}(t_f)^2 = 2 \implies (t_f)^2 = 16 \implies t_f = 4 \,\text{ s}
