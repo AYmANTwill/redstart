@@ -133,7 +133,7 @@ def _():
     g = 1.0   # gravité en m/s²
     M = 1.0   # masse du booster en kg
     l = 2.0   # longueur du booster
-    return M, l
+    return M, g, l
 
 
 @app.cell(hide_code=True)
@@ -378,6 +378,32 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+
+    L'état de la dynamique du booster est modélisée par le 6-uplet $s=(x,v_x,y,v_y,\theta,\omega)$, on travaille donc dans un espace d'état à $n=6$ dimensions. On obtient alors l'équation d'évolution suivante :
+
+    $$
+        \dot{s} = F(s, f, \phi) =
+        \begin{pmatrix}
+        \dot{x} \\ \dot{v}_x \\ \dot{y} \\ \dot{v}_y \\ \dot{\theta} \\ \dot{\omega}
+        \end{pmatrix}
+        =
+        \begin{pmatrix}
+        v_x \\
+        -\dfrac{f}{M}\sin(\theta + \phi) \\
+        v_y \\
+        \dfrac{f}{M}\cos(\theta + \phi) - g \\
+        \omega \\
+        -\dfrac{6f\, \sin\phi}{M \ell}
+        \end{pmatrix}
+        $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Simulation
 
     Define a function `redstart_solve` that, given the input parameters:
@@ -412,6 +438,30 @@ def _(mo):
     free_fall_example()
     ```
     """)
+    return
+
+
+@app.cell
+def _(M, g, l, np, solve_ivp):
+    def F(s, f, phi):
+        x, vx, y, vy, theta, omega = s
+        return np.array([
+            vx,
+            -(f/M) * np.sin(theta + phi),
+            vy,
+            (f/M) * np.cos(theta + phi) - g,
+            omega,
+            -(6*f*np.sin(phi)) / (M*l)
+        ])
+
+    def redstart_solve(t_span, y0, f_phi):
+        def dynamics(t, s):
+            f, phi = f_phi(t, s)
+            return F(s, f, phi)
+    
+        result = solve_ivp(dynamics, t_span, y0, method='RK45', dense_output=True, rtol=1e-8, atol=1e-8)
+        return result.sol
+
     return
 
 
