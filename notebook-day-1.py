@@ -757,7 +757,7 @@ def _(mo):
 def _():
     from svg import svg, transform, animate_transform
 
-    return
+    return (svg,)
 
 
 @app.cell(hide_code=True)
@@ -814,6 +814,65 @@ def _(mo):
     return
 
 
+@app.cell
+def _(svg):
+    def world(view_box, *objects):
+        x_min, x_max, y_min, y_max = view_box
+        W = x_max - x_min   # largeur de la scène en unités monde
+        H = y_max - y_min   # hauteur de la scène en unités monde
+        vb = f"{x_min} {-y_max} {W} {H}"
+
+        # Arrière-plan : ciel (au-dessus du sol y=0) et sol (en-dessous de y=0)
+        ciel = svg.rect(x=x_min, y=0, width=W, height=y_max,
+                        fill="#87CEEB")()           # bleu ciel
+        sol = svg.rect(x=x_min, y=y_min, width=W, height=(-y_min),
+                       fill="#8B6914")()            # brun terreux
+
+        # Zone d'atterrissage : 2 m de large, centrée sur (0, 0), posée sur la surface du sol
+        pad_l = 2.0
+        pad_h = 0.05  # fine bande
+        pad = svg.rect(x=-pad_l/2, y=-pad_h, width=pad_l, height=pad_h,
+                       fill="#22c55e")()           # vert vif
+
+        # Assemblage des éléments de la scène (système de coordonnées retourné via transform sur <g>)
+        elements_scene = [ciel, sol, pad] + list(objects)
+        groupe_scene = svg.g(transform="scale(1,-1)")(*elements_scene)
+
+        image = svg.svg(viewBox=vb, width="300", height=str(int(300 * H / W)), xmlns="http://www.w3.org/2000/svg")(groupe_scene)
+        return str(image)
+
+    return (world,)
+
+
+@app.cell
+def _(mo, svg, world):
+    mo.hstack(
+        [
+            # Monde vide
+            mo.Html(
+                world([-3, 3, -2, 4])
+            ),
+            # Monde avec un carré noir sur la zone d'atterrissage
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    svg.rect(x=-1, y=0, width=2, height=2, fill="black"),
+                )
+            ),
+            # Monde avec un carré rouge en haut à gauche et un carré bleu en haut à droite
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    svg.rect(x=-3, y=2, width=2, height=2, fill="red"),
+                    svg.rect(x=1, y=2, width=2, height=2, fill="blue"),
+                )
+            )
+        ],
+        justify="space-around"
+    )
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -863,6 +922,92 @@ def _(mo):
     )
     ```
     """)
+    return
+
+
+@app.cell
+def _(M, g, l, np, svg):
+    def booster(x, y, theta, f, phi):
+        # Dimensions du corps du booster
+        body_w = 0.15        # largeur du rectangle
+        body_h = l       # hauteur totale 
+
+        # Longueur de la flamme : proportionnelle à f ; l/2 quand f == M*g
+        flame_length = (l / 2) * (f / (M * g)) if f > 0 else 0.0
+        flame_w = 0.10
+
+
+        # Corps du booster (centré à l'origine locale)
+        body = svg.rect(
+            x=-body_w / 2,
+            y=-l/2,
+            width=body_w,
+            height=body_h,
+            fill="#94a3b8",
+            stroke="#475569",
+            stroke_width="0.01",
+            rx="0.04",
+        )()
+
+        # Cône de nez (petit triangle au sommet)
+        nose_h = 0.15
+        nose = svg.polygon(
+            points=f"{-body_w/2},{l/2} {body_w/2},{l/2} 0,{l/2 + nose_h}",
+            fill="#000000",
+        )()
+    
+        # On fait tourner le rectangle de flamme de phi autour du point d'attache à la base.
+        if flame_length > 0:
+            flame_rect = svg.rect(
+                x=-flame_w / 2,
+                y=-l/2,               # part de la base
+                width=flame_w,
+                height=flame_length,
+                fill="#f97316",
+                opacity="0.85",
+            )()
+            # rotation de la flamme de phi (CCW) autour du point de base (0, -l/2)
+            flame_group = svg.g(transform=f"rotate({np.degrees(-phi)}, 0, {-l/2})")(flame_rect)
+        else:
+            flame_group = svg.g()()
+
+        # Assemblage des parties dans le repère local, puis application position + inclinaison
+        # theta est l'angle CCW depuis la verticale → on tourne de -theta degrés
+        booster_group = svg.g(
+            transform=f"translate({x},{y}) rotate({np.degrees(-theta)}, 0, 0)"
+        )(flame_group, body, nose)
+
+        return str(booster_group)
+
+    return (booster,)
+
+
+@app.cell
+def _(M, booster, g, l, mo, np, world):
+    mo.hstack(
+        [
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    booster(0, l/2, 0, 0, 0),
+                )
+            ),
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    booster(0, l, 0, M * g, 0),
+                )
+            ),
+            mo.Html(
+                world(
+                    [-3, 3, -2, 4],
+                    booster(-l/2, l, np.pi / 4, 2 * M * g, np.pi / 2),
+                )
+            ),
+        ],
+        justify="space-around",
+    )
+
     return
 
 
