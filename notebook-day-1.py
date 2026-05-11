@@ -185,11 +185,11 @@ def _(np):
         Paramètres
         ----------
         f : Amplitude de la force du réacteur (f >= 0).
-        
+
         theta : Angle du booster par rapport à la verticale (rad, trigo positif).
-        
+
         phi : Angle de la force par rapport à l'axe du booster (rad, trigo positif).
-        
+
         Retours
         -------
         (fx, fy) : tuple de float
@@ -347,23 +347,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### 🔍 Commentaire
-
-    **Le résultat ne dépend que de $\phi$, pas de $\theta$.** C'est intuitif : le couple du réacteur sur la fusée dépend seulement de l'angle entre la force et l'axe du booster, pas de l'orientation absolue de l'ensemble dans l'espace. Cette propriété traduit l'**isotropie** du couple par rapport au repère propre du booster.
-
-    **Signe du couple.**
-
-    - Si $\phi > 0$ (réacteur dévié vers la gauche) → $\ddot{\theta} < 0$ → le booster tourne dans le **sens horaire** (vers la droite).
-    - Si $\phi < 0$ (réacteur dévié vers la droite) → $\ddot{\theta} > 0$ → le booster tourne dans le **sens trigo** (vers la gauche).
-
-    Cela correspond bien au principe physique : la poussée du réacteur fait **pivoter** le booster dans le sens **opposé** à la déviation du jet. C'est exactement le mécanisme de contrôle utilisé sur les vraies fusées (gimbal thrust vectoring).
-
-    **Cas particuliers utiles pour la suite :**
-
-    - $\phi = 0$ (poussée axiale) : $\ddot{\theta} = 0$. Le booster ne tourne pas.
-    - $\phi = \pm\pi/2$ : couple maximal en amplitude $\pm f\ell/(2J)$.
-
-    **Lien avec le contrôle.** L'angle $\phi$ est notre **entrée de commande** pour orienter le booster. C'est l'analogue de la "barre" sur un bateau : on dévie le flux pour créer un couple.
+ 
     """)
     return
 
