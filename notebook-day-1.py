@@ -166,6 +166,12 @@ def _(mo):
     f_y &= +f \cos(\theta + \phi)
     \end{aligned}
     $$
+
+    **Vérifications de cohérence :**
+
+    - Si $\theta = 0$ et $\phi = 0$ : la force est verticale vers le haut. On a bien $f_x = 0$ et $f_y = +f$ ✓
+    - Si $\theta = 0$ et $\phi = +\pi/2$ : la force pointe vers la gauche. On a bien $f_x = -f$ et $f_y = 0$ ✓
+    - Si $\theta = +\pi/2$ (booster couché à gauche) et $\phi = 0$ : la force pointe vers la gauche. On a bien $f_x = -f$ et $f_y = 0$ ✓
     """)
     return
 
@@ -202,6 +208,61 @@ def _(mo):
     ## 🧩 Center of Mass
 
     Give the ordinary differential equation that governs the evolution of the position $(x, y)$ of the center of mass of the booster.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Réponse
+
+    D'après la **deuxième loi de Newton** appliquée au centre de masse du booster, on a :
+
+    $$
+    M \, \ddot{\vec{r}} = \sum \vec{F}_{\text{ext}}
+    $$
+
+    où $\vec{r} = (x, y)^T$ est la position du centre de masse, et les forces extérieures sont :
+
+    - la **gravité** : $\vec{F}_g = (0, -Mg)^T$
+    - la **poussée du réacteur** : $\vec{F}_r = \big(-f \sin(\theta + \phi),\ +f \cos(\theta + \phi)\big)^T$
+
+    (On néglige la friction de l'air comme indiqué dans l'énoncé.)
+
+    **Écriture scalaire :**
+
+    $$
+    \begin{aligned}
+    \ddot{x} &= -\dfrac{f}{M} \sin(\theta + \phi) \\
+    \ddot{y} &= +\dfrac{f}{M} \cos(\theta + \phi) - g
+    \end{aligned}
+    $$
+
+    **Écriture matricielle compacte.** En introduisant la matrice de rotation d'angle $\alpha$ :
+
+    $$
+    R(\alpha) = \begin{pmatrix} \cos\alpha & -\sin\alpha \\ \sin\alpha & \cos\alpha \end{pmatrix}
+    $$
+
+    on remarque que :
+
+    $$
+    R(\theta + \phi) \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} -\sin(\theta+\phi) \\ \cos(\theta+\phi) \end{pmatrix}
+    $$
+
+    ce qui permet d'écrire le système sous la forme matricielle élégante :
+
+    $$
+    \boxed{\;\begin{pmatrix} \ddot{x} \\ \ddot{y} \end{pmatrix} = \dfrac{f}{M}\, R(\theta + \phi) \begin{pmatrix} 0 \\ 1 \end{pmatrix} + \begin{pmatrix} 0 \\ -g \end{pmatrix}\;}
+    $$
+
+    **Interprétation géométrique.** Cette formulation exprime que l'accélération du centre de masse est la somme :
+
+    - d'une **poussée** d'intensité $f/M$ dirigée selon l'axe du booster **tourné** de l'angle $\theta + \phi$ (composition rotation booster + orientation réacteur),
+    - de la **gravité** $-g$ selon $\vec{e}_y$.
+
+    On retrouve le principe fondamental sous une forme indépendante du repère.
     """)
     return
 
