@@ -1682,6 +1682,76 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+    """)
+    return
+
+
+@app.cell
+def _(g, np, plt, scipy):
+    def plot_linearized_free_fall():
+        A_lat = np.array([
+            [0, 1,  0, 0],
+            [0, 0, -g, 0],
+            [0, 0,  0, 1],
+            [0, 0,  0, 0]
+        ])
+    
+        y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+    
+        def fun(t, state):
+            return A_lat @ state
+        
+        t_span = [0.0, 25.0] # Simulation sur 5 secondes
+        result = scipy.integrate.solve_ivp(fun, t_span, y0, dense_output=True)
+        
+        t = np.linspace(t_span[0], t_span[1], 500)
+        states = result.sol(t)
+        x_t = states[0]      
+        theta_t = states[2]  
+    
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+    
+        ax1.plot(t, x_t, color='blue')
+        ax1.set_title("Position latérale x(t)")
+        ax1.set_xlabel("Temps (s)")
+        ax1.set_ylabel("x (m)")
+        ax1.grid(True)
+    
+        ax2.plot(t, theta_t, color='red')
+        ax2.set_title("Angle d'inclinaison θ(t)")
+        ax2.set_xlabel("Temps (s)")
+        ax2.set_ylabel("θ (rad)")
+        ax2.grid(True)
+    
+        return fig
+
+    plot_linearized_free_fall()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Analyse physique des résultats
+
+    **Ce que l'on observe sur les graphes :**
+    * L'angle d'inclinaison $\theta(t)$ **reste parfaitement constant** à sa valeur initiale de $\pi/4$ (environ 0.78 rad) tout au long de la simulation.
+    * La position latérale $x(t)$ décrit une **courbe parabolique** (le booster dérive de plus en plus vite vers la gauche, dans les valeurs négatives).
+
+    **Comment l'expliquer physiquement ?**
+
+    1. **L'angle constant ($\theta$) :** Le booster est soumis à deux forces : la gravité et la poussée du réacteur. La gravité s'applique au centre de masse (elle ne crée donc pas de rotation). La poussée du réacteur ($f = Mg$) est parfaitement alignée avec l'axe du booster puisque l'angle $\phi$  est nul. Sa ligne d'action passe donc par le centre de masse. Puisqu'aucune force ne crée de bras de levier, le moment des forces (couple) est nul. Le booster ne subit aucune accélération angulaire ($\Delta \dot{\omega} = 0$) et conserve indéfiniment son inclinaison initiale de 45°.
+
+    2. **La dérive parabolique ($x$) :** Le booster est incliné à 45°, mais la norme de sa poussée reste fixée à $f = Mg$. Si l'on regarde l'équation de notre dynamique latérale linéarisée, l'accélération horizontale vaut $\Delta \dot{v}_x = -g \Delta \theta - g \Delta \phi$.
+    Puisque $\Delta \phi = 0$ et $\Delta \theta = \pi/4$ (constante positive), l'accélération horizontale devient une constante strictement négative. L'intégration d'une accélération constante donne une vitesse linéaire et une position suivant une trajectoire quadratique (parabole). Le réacteur pousse constamment le booster "sur le côté".
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Manually Tuned Controller
 
     Try to find the two missing coefficients of the matrix
