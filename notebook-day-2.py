@@ -1387,6 +1387,118 @@ def _(mo):
     mo.md(r"""
     ### 📝 Réponse
     Un système LTI de dimension $n$ est contrôlable si et seulement si sa matrice de commandabilité $\mathcal{C}$ est de rang plein, c'est-à-dire $\text{rang}(\mathcal{C}) = n$.
+
+    Pour étudier donc la contrôlabilité de notre système linéarisé (d'ordre $n=6$) on calcule la matrice de commandabilité de Kalman $\mathcal{C}$, définie par :
+    $$
+    \mathcal{C} = \begin{bmatrix} B & AB & A^2B & A^3B & A^4B & A^5B \end{bmatrix}
+    $$
+
+    **1. Calcul des produits matriciels successifs :**
+
+    En utilisant nos matrices $A$ et $B$ d'origine :
+    $$
+    A = \begin{pmatrix}
+    0 & 1 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0 & 0 & 0
+    \end{pmatrix},
+    \quad
+    B = \begin{pmatrix}
+    0 & 0 \\
+    0 & -g \\
+    0 & 0 \\
+    1/M & 0 \\
+    0 & 0 \\
+    0 & -6g/\ell
+    \end{pmatrix}
+    $$
+
+    On calcule pas à pas les blocs de la matrice de Kalman :
+
+    Le bloc $AB$ :
+    $$
+    AB = A \times B = \begin{pmatrix}
+    0 & -g \\
+    0 & 0 \\
+    1/M & 0 \\
+    0 & 0 \\
+    0 & -6g/\ell \\
+    0 & 0
+    \end{pmatrix}
+    $$
+
+    Le bloc $A^2B$ :
+    $$
+    A^2B = A \times (AB) = \begin{pmatrix}
+    0 & 0 \\
+    0 & 6g^2/\ell \\
+    0 & 0 \\
+    0 & 0 \\
+    0 & 0 \\
+    0 & 0
+    \end{pmatrix}
+    $$
+
+    Le bloc $A^3B$ :
+    $$
+    A^3B = A \times (A^2B) = \begin{pmatrix}
+    0 & 6g^2/\ell \\
+    0 & 0 \\
+    0 & 0 \\
+    0 & 0 \\
+    0 & 0 \\
+    0 & 0
+    \end{pmatrix}
+    $$
+
+    *(Les blocs $A^4B$ et $A^5B$ sont des matrices nulles).*
+
+    **2. Assemblage de la matrice de Kalman :**
+
+    En concaténant ces matrices côte à côte, on obtient la matrice $\mathcal{C}$ de dimension $6 \times 12$ :
+
+    $$
+    \mathcal{C} = \begin{pmatrix}
+    0 & 0 & 0 & -g & 0 & 0 & 0 & 6g^2/\ell & \dots \\
+    0 & -g & 0 & 0 & 0 & 6g^2/\ell & 0 & 0 & \dots \\
+    0 & 0 & 1/M & 0 & 0 & 0 & 0 & 0 & \dots \\
+    1/M & 0 & 0 & 0 & 0 & 0 & 0 & 0 & \dots \\
+    0 & 0 & 0 & -6g/\ell & 0 & 0 & 0 & 0 & \dots \\
+    0 & -6g/\ell & 0 & 0 & 0 & 0 & 0 & 0 & \dots
+    \end{pmatrix}
+    $$
+
+    **3. Démonstration du rang plein ($n=6$) :**
+
+    Pour prouver que le système est contrôlable, il faut démontrer que $\text{rang}(\mathcal{C}) = 6$. Pour ce faire, extrayons 6 colonnes linéairement indépendantes pour former une sous-matrice carrée $6 \times 6$.
+
+    En choisissant (de gauche à droite) la 8ème, la 6ème, la 3ème, la 1ère, la 4ème et la 2ème colonne, nous obtenons la sous-matrice $M_c$ suivante :
+
+    $$
+    M_c = \begin{pmatrix}
+    6g^2/\ell & 0 & 0 & 0 & -g & 0 \\
+    0 & 6g^2/\ell & 0 & 0 & 0 & -g \\
+    0 & 0 & 1/M & 0 & 0 & 0 \\
+    0 & 0 & 0 & 1/M & 0 & 0 \\
+    0 & 0 & 0 & 0 & -6g/\ell & 0 \\
+    0 & 0 & 0 & 0 & 0 & -6g/\ell
+    \end{pmatrix}
+    $$
+
+    Cette matrice $M_c$ est **triangulaire supérieure**. Son déterminant est donc simplement le produit des éléments de sa diagonale principale :
+
+    $$
+    \det(M_c) = \left(\frac{6g^2}{\ell}\right)^2 \times \left(\frac{1}{M}\right)^2 \times \left(-\frac{6g}{\ell}\right)^2
+    $$
+
+    Puisque les grandeurs physiques ($M$, $g$, $\ell$) sont strictement positives, ce déterminant est **non nul**. Les 6 colonnes choisies sont linéairement indépendantes, ce qui garantit que $\text{rang}(\mathcal{C}) = 6$.
+
+    **Conclusion :** Le modèle linéarisé complet est totalement contrôlable.
+
+    On peut aussi vérifier ceci par le code Python suivant :
     """)
     return
 
@@ -1432,6 +1544,123 @@ def _(mo):
     - What are the new (reduced) matrices $A$ and $B$ for this reduced system?
 
     - Check the controllability of this new system.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Réponse
+
+    Pour réduire le système aux seules dynamiques latérales, on ignore l'axe vertical ($y$ et $\dot{y}$) et on fixe la force $f = Mg$, ceci implique que la variation de force est nulle ($\Delta f = 0$).
+
+    Le nouveau vecteur d'état latéral $\Delta s_{lat}$ et la nouvelle entrée $\Delta u_{lat}$ sont :
+    $$
+    \Delta s_{lat} =
+    \begin{pmatrix}
+    \Delta x \\ \Delta v_x \\ \Delta \theta \\ \Delta \omega
+    \end{pmatrix},
+    \quad
+    \Delta u_{lat} = \Delta \phi
+    $$
+
+    **1. Matrices du système réduit :**
+
+    En extrayant les lignes et colonnes correspondantes de notre modèle complet (et en annulant les termes en $\Delta f$), nous obtenons le système réduit $\Delta \dot{s}_{lat} = A_{lat} \Delta s_{lat} + B_{lat} \Delta u_{lat}$ avec :
+
+    $$
+    A_{lat} =
+    \begin{pmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{pmatrix},
+    \quad
+    B_{lat} =
+    \begin{pmatrix}
+    0 \\
+    -g \\
+    0 \\
+    -\dfrac{6g}{\ell}
+    \end{pmatrix}
+    $$
+
+    **2. Contrôlabilité du nouveau système :**
+
+    Pour vérifier si ce système réduit (d'ordre $n=4$) est contrôlable, nous devons construire sa matrice de commandabilité de Kalman :
+    $$
+    \mathcal{C}_{lat} = \begin{bmatrix} B_{lat} & A_{lat}B_{lat} & A_{lat}^2B_{lat} & A_{lat}^3B_{lat} \end{bmatrix}
+    $$
+
+    Calculons successivement chaque colonne de cette matrice :
+
+    * **1ère colonne ($B_{lat}$) :**
+    $$
+    B_{lat} = \begin{pmatrix} 0 \\ -g \\ 0 \\ -\dfrac{6g}{\ell} \end{pmatrix}
+    $$
+
+    * **2ème colonne ($A_{lat}B_{lat}$) :**
+    $$
+    A_{lat}B_{lat} =
+    \begin{pmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{pmatrix}
+    \begin{pmatrix} 0 \\ -g \\ 0 \\ -\dfrac{6g}{\ell} \end{pmatrix}
+    = \begin{pmatrix} -g \\ 0 \\ -\dfrac{6g}{\ell} \\ 0 \end{pmatrix}
+    $$
+
+    * **3ème colonne ($A_{lat}^2B_{lat}$) :**
+    $$
+    A_{lat}^2B_{lat} = A_{lat} \times (A_{lat}B_{lat}) =
+    \begin{pmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{pmatrix}
+    \begin{pmatrix} -g \\ 0 \\ -\dfrac{6g}{\ell} \\ 0 \end{pmatrix}
+    = \begin{pmatrix} 0 \\ \dfrac{6g^2}{\ell} \\ 0 \\ 0 \end{pmatrix}
+    $$
+
+    * **4ème colonne ($A_{lat}^3B_{lat}$) :**
+    $$
+    A_{lat}^3B_{lat} = A_{lat} \times (A_{lat}^2B_{lat}) =
+    \begin{pmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{pmatrix}
+    \begin{pmatrix} 0 \\ \dfrac{6g^2}{\ell} \\ 0 \\ 0 \end{pmatrix}
+    = \begin{pmatrix} \dfrac{6g^2}{\ell} \\ 0 \\ 0 \\ 0 \end{pmatrix}
+    $$
+
+    En assemblant ces 4 colonnes, on obtient la matrice de Kalman $\mathcal{C}_{lat}$ :
+
+    $$
+    \mathcal{C}_{lat} =
+    \begin{pmatrix}
+    0 & -g & 0 & \dfrac{6g^2}{\ell} \\
+    -g & 0 & \dfrac{6g^2}{\ell} & 0 \\
+    0 & -\dfrac{6g}{\ell} & 0 & 0 \\
+    -\dfrac{6g}{\ell} & 0 & 0 & 0
+    \end{pmatrix}
+    $$
+
+    **Conclusion sur la contrôlabilité :**
+
+    La matrice $\mathcal{C}_{lat}$ est une matrice anti-triangulaire. Le produit des éléments de son anti-diagonale est :
+    $$
+    \left(-\dfrac{6g}{\ell}\right) \times \left(-\dfrac{6g}{\ell}\right) \times \left(\dfrac{6g^2}{\ell}\right) \times \left(\dfrac{6g^2}{\ell}\right)
+    $$
+    Puisque les grandeurs $g$ et $\ell$ sont strictement positives, ce produit est non nul, ce qui implique que le déterminant de la matrice est non nul.
+
+    La matrice est donc de **rang plein (rang = 4)**. Le système latéral réduit est **contrôlable**.
     """)
     return
 
