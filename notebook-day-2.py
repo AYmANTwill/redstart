@@ -1087,6 +1087,62 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+
+    Un état d'équilibre est un état pour lequel $\dot{s} = F(s, f, \phi) = 0$.
+    Ceci nous amène à résourdre le système d'équations suivant:
+
+    $$
+        \dot{s} = F(s, f, \phi) =
+        \begin{pmatrix}
+        \dot{x} \\ \dot{v}_x \\ \dot{y} \\ \dot{v}_y \\ \dot{\theta} \\ \dot{\omega}
+        \end{pmatrix}
+        =
+        \begin{pmatrix}
+        v_x \\
+        -\dfrac{f}{M}\sin(\theta + \phi) \\
+        v_y \\
+        \dfrac{f}{M}\cos(\theta + \phi) - g \\
+        \omega \\
+        -\dfrac{6f\, \sin\phi}{M \ell}
+        \end{pmatrix}
+        =
+        \begin{pmatrix}
+        \ 0 \\ 0 \\ 0\\ 0 \\ 0 \\ 0 \end{pmatrix}
+        $$
+
+
+    1. **Vitesses :** Les lignes 1, 3 et 5 nous donnent immédiatement $v_x = 0$, $v_y = 0$, et $\omega = 0$. Le booster est immobile.
+    2. **Angle de poussée ($\phi$) :** La ligne 6 nous indique que $-\dfrac{6f\, \sin\phi}{M \ell} = 0$. Comme la force $f > 0$ il faut donc que $\sin\phi = 0$. Compte tenu de la contrainte $|\phi| < \pi/2$, l'unique solution est :
+       $\phi = 0$
+    3. **Inclinaison du booster ($\theta$) :** En remplaçant $\phi = 0$ dans la 2ème équation, on obtient $-\dfrac{f}{M}\sin(\theta) = 0$. Cela implique que $\sin\theta = 0$. Avec la contrainte $|\theta| < \pi/2$, la seule solution possible est :
+       $\theta = 0$
+    4. **Force de poussée ($f$) :** En insérant $\theta = 0$ et $\phi = 0$ dans la 4ème équation, on obtient $\dfrac{f}{M}\cos(0) - g = 0$, ce qui donne directement la poussée nécessaire pour compenser exactement la gravité :
+       $f = Mg$
+    5. **Positions ($x$ et $y$) :** Les variables de position $x$ et $y$ n'apparaissent pas du tout dans le système d'équations des dérivées. Par conséquent, elles n'influent pas sur l'équilibre et peuvent prendre n'importe quelles valeurs constantes (notons-les $x_e$ et $y_e$) (le booster peut rester en équilibre dans l'air sans forcément toucher le sol).
+
+    **Conclusion :**
+
+    Les valeurs correspondantes des entrées à l'équilibre sont :
+    $$
+    f_e = Mg, \quad \phi_e = 0
+    $$
+    (Pour ne pas tourner, la poussée du moteur doit être parfaitement alignée avec le centre de gravité du booster et la poussée du réacteur doit compenser exactement le poids du booster pour qu'il maintienne une altitude constante)
+
+    Et les états d'équilibre possibles s'écrivent sous la forme du vecteur suivant :
+    $$
+    s_e =
+    \begin{pmatrix}
+    x_e \\ 0 \\ y_e \\ 0 \\ 0 \\ 0
+    \end{pmatrix}
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Linearized Model
 
     Introduce the error variables $\Delta x$, $\Delta y$, $\Delta \theta$, and $\Delta f$ and $\Delta \phi$ of the state and input values with respect to the generic equilibrium configuration.
