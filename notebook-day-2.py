@@ -1310,8 +1310,8 @@ def _(mo):
 
 
 @app.cell
-def _():
-    def _(J, M, g, l, np):
+def _(J, M, g, l, np):
+    def A_et_B(J, M, g, l, np):
         A = np.array([
             [0,1,0,0,0,0],
             [0,0,0,0,-g,0],
@@ -1337,7 +1337,8 @@ def _():
         print(B)
         return A, B
 
-    return
+    A_et_B(J, M, g, l, np)
+    return (A_et_B,)
 
 
 @app.cell(hide_code=True)
@@ -1353,9 +1354,70 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+
+    On observe que $A$ est une matrice strictement triangulaire supérieure, ses valeurs propres se lisent sur sa diagonale principale.
+
+    Le spectre de la matrice $A$ est :
+    $$
+    \sigma(A) = \{0, 0, 0, 0, 0, 0\}
+    $$
+
+    Toutes les valeurs propres ont une partie réelle égale à $0$. La condition d'avoir une partie réelle strictement négative pour avoir un système linéaire temps-invariant asymptotiquement stable autour de son point d'équilibre n'est donc pas respectée.
+
+    **Conclusion :**
+
+    Cela fait sens d'un point de vue physique ; un booster en vol stationnaire n'a aucune tendance naturelle à revenir à sa position verticale s'il subit une perturbation dûe au vent par exemple; il va commencer à dériver ou à basculer indéfiniment si aucune action de contrôle ($\Delta \phi$) n'est activement appliquée pour le corriger.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Controllability
 
     Is the linearized model controllable?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Réponse
+    Un système LTI de dimension $n$ est contrôlable si et seulement si sa matrice de commandabilité $\mathcal{C}$ est de rang plein, c'est-à-dire $\text{rang}(\mathcal{C}) = n$.
+    """)
+    return
+
+
+@app.cell
+def _(A_et_B, J, M, g, l, np):
+    def testcontrol(A, B, np):
+        def controllability_matrix(A, B):
+            n = A.shape[0]
+            cols = [B]
+            for _ in range(1, n):
+                cols.append(A @ cols[-1])
+            return np.hstack(cols)
+
+        C_mat = controllability_matrix(A, B)
+        rank_C = np.linalg.matrix_rank(C_mat)
+        print(f"Rang de la matrice de commandabilité: {rank_C} (state dimension n = {A.shape[0]})")
+        print("Le système est contrôable:", rank_C == A.shape[0])
+        return C_mat, controllability_matrix, rank_C
+    A, B = A_et_B(J, M, g, l, np)    
+    testcontrol(A, B, np)
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **Conclusion** :
+
+    Le système est bel et bien contrôlable
     """)
     return
 
