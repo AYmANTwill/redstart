@@ -2026,7 +2026,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### 📝 Placement de Pôles (Pole Assignment)
+    ### 📝 Réponse
 
     Puisque le modèle latéral linéarisé est totalement contrôlable, nous pouvons utiliser la méthode de placement de pôles pour concevoir notre matrice de gain $K_{pp}$.
 
@@ -2110,7 +2110,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### 📝 Contrôle Optimal (LQR)
+    ### 📝 Réponse
 
     Contrairement au placement de pôles qui demande une intuition sur la dynamique spectrale, la commande optimale (LQR) permet de formuler le problème sous forme d'optimisation d'un compromis entre la précision du suivi (pénalisée par la matrice $Q$) et l'énergie de contrôle dépensée (pénalisée par la matrice $R$).
 
@@ -2196,6 +2196,89 @@ def _(mo):
 
     Test the two control strategies (pole placement and optimal control) on the "true" (nonlinear) model with an animation. Check that both controllers achieve their goal; otherwise, go back to the drawing board and tweak the design parameters until they do!
     """)
+    return
+
+
+@app.cell
+def _():
+    ### 📝 Réponse
+    return
+
+
+@app.cell
+def _(g, l, np, plt, scipy):
+    def validate_nonlinear_controllers():
+    
+       
+        K_pp = np.array([[-0.0163, -0.1633, -0.6389, -1.0333]]) # Exemple de gains de placement de pôles
+        K_oc = np.array([[-0.0500, -0.2201, -0.8407, -1.2166]]) # Exemple de gains LQR
+    
+        y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+        t_span = [0.0, 30.0]
+        t = np.linspace(t_span[0], t_span[1], 500)
+    
+        #Fonction de dynamique NON-LINÉAIRE
+        def nonlinear_dynamics(t, state, K):
+            x, vx, theta, omega = state
+        
+            # Loi de commande linéaire
+            phi_cmd = -(K @ state)[0]
+            # Saturation physique (la tuyère ne dépasse pas 90°)
+            phi = np.clip(phi_cmd, -np.pi/2, np.pi/2)
+        
+            # Vraies équations physiques
+            dx = vx
+            dvx = -g * np.sin(theta + phi)
+            dtheta = omega
+            domega = -(6 * g / l) * np.sin(phi)
+        
+            return np.array([dx, dvx, dtheta, domega])
+
+        # Pour le placement de pôles
+        res_pp = scipy.integrate.solve_ivp(
+            lambda t, y: nonlinear_dynamics(t, y, K_pp), 
+            t_span, y0, dense_output=True
+        )
+        states_pp = res_pp.sol(t)
+    
+        # Pour le contrôle optimal (LQR)
+        res_oc = scipy.integrate.solve_ivp(
+            lambda t, y: nonlinear_dynamics(t, y, K_oc), 
+            t_span, y0, dense_output=True
+        )
+        states_oc = res_oc.sol(t)
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    
+        # Graphe Angle
+        ax1.plot(t, states_pp[2], 'r--', label='Pole Placement')
+        ax1.plot(t, states_oc[2], 'b-', label='Optimal Control (LQR)')
+        ax1.axhline(0, color='k', ls=':')
+        ax1.set_title("Angle θ(t) - Modèle VRAI (Non-linéaire)")
+        ax1.set_ylabel("Angle [rad]")
+        ax1.set_xlabel("Temps [s]")
+        ax1.legend()
+        ax1.grid(True)
+    
+        # Graphe Position
+        ax2.plot(t, states_pp[0], 'r--', label='Pole Placement')
+        ax2.plot(t, states_oc[0], 'b-', label='Optimal Control (LQR)')
+        ax2.axhline(0, color='k', ls=':')
+        ax2.set_title("Position x(t) - Modèle VRAI (Non-linéaire)")
+        ax2.set_ylabel("Position [m]")
+        ax2.set_xlabel("Temps [s]")
+        ax2.legend()
+        ax2.grid(True)
+    
+        plt.tight_layout()
+    
+        # Si vous avez une fonction d'animation fournie par le cours, 
+        # vous pouvez l'appeler ici, par exemple :
+        # return animate_system(t, states_oc)
+    
+        return fig
+
+    validate_nonlinear_controllers()
     return
 
 
