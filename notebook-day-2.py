@@ -1702,7 +1702,7 @@ def _(g, np, plt, scipy):
         def fun(t, state):
             return A_lat @ state
         
-        t_span = [0.0, 25.0] # Simulation sur 5 secondes
+        t_span = [0.0, 25.0] # Simulation sur 25 secondes
         result = scipy.integrate.solve_ivp(fun, t_span, y0, dense_output=True)
         
         t = np.linspace(t_span[0], t_span[1], 500)
@@ -1787,6 +1787,213 @@ def _(mo):
 
     Is your final closed-loop model asymptotically stable?
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Réponse : Réglage manuel du contrôleur
+
+    En imposant la forme $K = [0 \quad 0 \quad K_p \quad K_d]$, la loi de commande devient un correcteur agissant uniquement sur l'angle : $\Delta \phi = -K_p \Delta \theta - K_d \Delta \dot{\theta}$.
+
+    En injectant cette commande dans l'équation de la dynamique de rotation linéarisée ($\Delta \ddot{\theta} = -\frac{6g}{\ell} \Delta \phi$), on obtient un système du second ordre en boucle fermée :
+    $$
+    \Delta \ddot{\theta} - \frac{6g K_d}{\ell} \Delta \dot{\theta} - \frac{6g K_p}{\ell} \Delta \theta = 0
+    $$
+
+    Pour garantir la stabilité, $K_p$ et $K_d$ doivent être strictement négatifs. En identifiant cette équation à la forme canonique $\ddot{\theta} + 2\zeta\omega_n \dot{\theta} + \omega_n^2 \theta = 0$, on obtient :
+    $$K_p = -\frac{\ell \omega_n^2}{6g} \quad \text{et} \quad K_d = -\frac{2\zeta\omega_n \ell}{6g}$$
+
+    **Réglage itératif :**
+    Une première approche pour éviter les dépassements dangereux (qui violeraient les contraintes d'angle), est de choisir un régime critique $\zeta = 1$. Pour atteindre un temps de réponse d'environ 20 secondes, on vise le critère $t_r \approx 4/(\zeta\omega_n) = 20$, ce qui donne $\omega_n = 0.2$ rad/s.
+    Avec $g=1$ et $\ell=2$, cela nous donne les valeurs :
+    $$
+    K = \begin{bmatrix} 0 & 0 & -0.0133 & -0.133 \end{bmatrix}
+    $$
+    Une autre approche est de tester plusieurs valeurs en simulations et de choisir une qui respecte toutes les conditions, c'est aussi ce qui proposé en bas avec Python.
+
+    **Stabilité asymptotique de la boucle fermée :**
+
+    Le modèle complet en boucle fermée **n'est pas asymptotiquement stable**. En effet, puisque le contrôleur ignore la position $x$ et sa vitesse $v_x$ (les deux premières colonnes de $K$ sont nulles), la matrice en boucle fermée $A_{cl} = A - BK$ possède une première colonne entièrement nulle.
+    Par conséquent, elle admet $\lambda = 0$ comme valeur propre. Comme toutes les valeurs propres n'ont pas une partie réelle *strictement* négative, le système n'est que marginalement stable : l'angle $\theta$ converge vers 0, mais la position $x(t)$ va dériver à l'infini à vitesse constante.
+    """)
+    return
+
+
+@app.cell
+def _(g, l, np, plt, scipy):
+    A_lat = np.array([
+            [0, 1,  0, 0],
+            [0, 0, -g, 0],
+            [0, 0,  0, 1],
+            [0, 0,  0, 0]
+        ])
+    B_lat = np.array([
+            [0],
+            [-g],
+            [0],
+            [-6*g/l]
+        ])
+    # Nos gains trouvés manuellement
+    K = np.array([[0.0, 0.0, -0.0133, -0.133]])
+    def manual_tuning_simulation(K):
+    
+   
+        A_cl = A_lat - B_lat @ K
+    
+        # Conditions initiales
+        y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+    
+        def fun(t, state):
+            return A_cl @ state
+        
+        t_span = [0.0, 30.0] #Simulation sur 30s
+        result = scipy.integrate.solve_ivp(fun, t_span, y0, dense_output=True)
+    
+        t = np.linspace(t_span[0], t_span[1], 500)
+        states = result.sol(t)
+    
+        x_t = states[0]
+        theta_t = states[2]
+    
+        # Recalcul de la commande pour vérifier les contraintes
+        phi_t = -(K @ states)[0] 
+    
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
+    
+        ax1.plot(t, theta_t, 'r')
+        ax1.axhline(0, color='k', ls='--')
+        ax1.set_title("Angle θ(t) [rad]")
+        ax1.grid(True)
+    
+        ax2.plot(t, phi_t, 'g')
+        ax2.axhline(np.pi/2, color='r', ls=':')
+        ax2.axhline(-np.pi/2, color='r', ls=':')
+        ax2.set_title("Commande ϕ(t) [rad]")
+        ax2.grid(True)
+    
+        ax3.plot(t, x_t, 'b')
+        ax3.set_title("Position x(t) (Dérive) [m]")
+        ax3.grid(True)
+    
+        plt.tight_layout()
+        return fig
+
+    manual_tuning_simulation(K)
+    return (manual_tuning_simulation,)
+
+
+@app.cell
+def _(manual_tuning_simulation, np):
+    K2 = np.array([[0.0, 0.0, -0.08, -0.5]])
+    manual_tuning_simulation(K2)
+    return
+
+
+@app.cell
+def _(manual_tuning_simulation, np):
+    K1 = np.array([[0.0, 0.0, 0.0133, 0.133]])
+    manual_tuning_simulation(K1)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Le gain Proportionnel ($K_p$) agit comme un ressort : plus sa valeur absolue est grande, plus le booster est rappelé violemment vers la verticale, mais plus il a tendance à osciller.Le gain Dérivé ($K_d$) agit comme un amortisseur : il freine la vitesse de rotation pour éviter les oscillations, mais s'il est trop fort, le système devient lent.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    # Curseurs pour les gains directs
+    Kp_slider = mo.ui.slider(
+        start=-0.1, stop=0.05, step=0.001, value=-0.013, 
+        label=r"$K_p$ (Gain Proportionnel : raideur)"
+    )
+
+    Kd_slider = mo.ui.slider(
+        start=-0.5, stop=0.1, step=0.01, value=-0.13, 
+        label=r"$K_d$ (Gain Dérivé : amortissement)"
+    )
+
+    # Affichage du tableau de bord
+    mo.vstack([
+        mo.md("### 🎛️ Réglage manuel direct des gains $K_p$ et $K_d$"),
+        mo.md("Réglez directement les gains. (Rappel : pour la stabilité, ils doivent normalement être négatifs)."),
+        Kp_slider,
+        Kd_slider
+    ])
+    return Kd_slider, Kp_slider
+
+
+@app.cell
+def _(Kd_slider, Kp_slider, np, plt, scipy):
+    # La cellule se rafraîchit à chaque mouvement de curseur
+    def direct_gains_simulation(kp, kd):
+        g = 1.0
+        l = 2.0
+    
+        # 1. Utilisation directe des gains
+        K = np.array([[0.0, 0.0, kp, kd]])
+    
+        # 2. Matrices du système
+        A_lat = np.array([
+            [0, 1,  0, 0],
+            [0, 0, -g, 0],
+            [0, 0,  0, 1],
+            [0, 0,  0, 0]
+        ])
+        B_lat = np.array([
+            [0],
+            [-g],
+            [0],
+            [-6*g/l]
+        ])
+    
+        A_cl = A_lat - B_lat @ K
+    
+        # 3. Simulation
+        y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+    
+        def fun(t, state):
+            return A_cl @ state
+        
+        t_span = [0.0, 30.0]
+        result = scipy.integrate.solve_ivp(fun, t_span, y0, dense_output=True)
+    
+        t = np.linspace(t_span[0], t_span[1], 500)
+        states = result.sol(t)
+    
+        x_t = states[0]
+        theta_t = states[2]
+        phi_t = -(K @ states)[0] 
+    
+        # 4. Affichage
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
+    
+        ax1.plot(t, theta_t, 'r')
+        ax1.axhline(0, color='k', ls='--')
+        ax1.set_title("Angle θ(t) [rad]")
+        ax1.grid(True)
+    
+        ax2.plot(t, phi_t, 'g')
+        ax2.axhline(np.pi/2, color='r', ls=':')
+        ax2.axhline(-np.pi/2, color='r', ls=':')
+        ax2.set_title("Commande ϕ(t) [rad]")
+        ax2.grid(True)
+    
+        ax3.plot(t, x_t, 'b')
+        ax3.set_title("Position x(t) (Dérive) [m]")
+        ax3.grid(True)
+    
+        plt.tight_layout()
+        return fig
+
+    # L'exécution appelle la fonction avec les valeurs des curseurs
+    direct_gains_simulation(Kp_slider.value, Kd_slider.value)
     return
 
 
