@@ -1247,6 +1247,102 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+
+    On utilise le vecteur d'état $\Delta s$ et le vecteur d'entrée $\Delta u$ définis par les écarts par rapport à l'équilibre. Le système linéaire mis sous forme standard $\Delta \dot{s} = A \Delta s + B \Delta u$ s'écrit alors :
+
+    $$
+    \Delta \dot{s} =
+    \begin{pmatrix}
+    \Delta \dot{x} \\ \Delta \dot{v}_x \\ \Delta \dot{y} \\ \Delta \dot{v}_y \\ \Delta \dot{\theta} \\ \Delta \dot{\omega}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+    0 & 1 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0 & 0 & 0
+    \end{pmatrix}
+    \begin{pmatrix}
+    \Delta x \\ \Delta v_x \\ \Delta y \\ \Delta v_y \\ \Delta \theta \\ \Delta \omega
+    \end{pmatrix}
+    +
+    \begin{pmatrix}
+    0 & 0 \\
+    0 & -g \\
+    0 & 0 \\
+    \dfrac{1}{M} & 0 \\
+    0 & 0 \\
+    0 & -\dfrac{6g}{\ell}
+    \end{pmatrix}
+    \begin{pmatrix}
+    \Delta f \\ \Delta \phi
+    \end{pmatrix}
+    $$
+
+    Où les matrices de la forme standard sont :
+
+    $$
+    A =
+    \begin{pmatrix}
+    0 & 1 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0 & 0 & 0
+    \end{pmatrix},
+    \quad
+    B =
+    \begin{pmatrix}
+    0 & 0 \\
+    0 & -g \\
+    0 & 0 \\
+    \dfrac{1}{M} & 0 \\
+    0 & 0 \\
+    0 & -\dfrac{6g}{\ell}
+    \end{pmatrix}
+    $$
+    """)
+    return
+
+
+@app.cell
+def _():
+    def _(J, M, g, l, np):
+        A = np.array([
+            [0,1,0,0,0,0],
+            [0,0,0,0,-g,0],
+            [0,0,0,1,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,1],
+            [0,0,0,0,0,0],
+        ])
+
+        B = np.array([
+            [0,0],
+            [0,-g],
+            [0,0],
+            [1/M,0],
+            [0,0],
+            [0,-M * g * l / (2 * J)],
+        ])
+
+        print("A =")
+        print(A)
+        print()
+        print("B =")
+        print(B)
+        return A, B
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Stability
 
     Is the generic equilibrium asymptotically stable?
