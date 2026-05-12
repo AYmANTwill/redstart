@@ -1154,6 +1154,88 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Réponse
+
+    La linéarisation d'un système non-linéaire autour d'un équilibre repose sur une approximation au **premier ordre** (développement de Taylor). En reprenant l'état d'équilibre calculé précédemment $(x_e, 0, y_e, 0, 0, 0)$ avec les entrées $f_e = Mg$ et $\phi_e = 0$, nous pouvons exprimer les variables du système en fonction de leurs écarts :
+
+    **États :**
+    $$
+    \begin{aligned}
+    x &= x_e + \Delta x \implies \dot{x} = \Delta \dot{x} \\
+    v_x &= 0 + \Delta v_x \implies \dot{v}_x = \Delta \dot{v}_x \\
+    y &= y_e + \Delta y \implies \dot{y} = \Delta \dot{y} \\
+    v_y &= 0 + \Delta v_y \implies \dot{v}_y = \Delta \dot{v}_y \\
+    \theta &= 0 + \Delta \theta \implies \dot{\theta} = \Delta \dot{\theta} \\
+    \omega &= 0 + \Delta \omega \implies \dot{\omega} = \Delta \dot{\omega}
+    \end{aligned}
+    $$
+
+    **Entrées :**
+    $$
+    \begin{aligned}
+    f &= Mg + \Delta f \\
+    \phi &= 0 + \Delta \phi
+    \end{aligned}
+    $$
+
+
+    **Linéarisation des équations différentielles :**
+
+    Reprenons chaque équation du champ de vecteurs $F(s, f, \phi)$ et appliquons l'approximation au premier ordre :
+
+    * **Axe horizontal (Position et vitesse) :**
+        $$\Delta \dot{x} = \Delta v_x$$
+
+        Pour la vitesse $v_x$ :
+        $$\Delta \dot{v}_x = -\frac{Mg + \Delta f}{M} \sin(\Delta \theta + \Delta \phi)$$
+
+        Avec l'approximation des petits angles, $\sin(\Delta \theta + \Delta \phi) \approx \Delta \theta + \Delta \phi$. En développant et en négligeant le terme du second ordre ($\Delta f \cdot \Delta \theta$ et $\Delta f \cdot \Delta \phi$), on obtient :
+        $$\Delta \dot{v}_x = -g \Delta \theta - g \Delta \phi$$
+
+    * **Axe vertical (Position et vitesse) :**
+        $$\Delta \dot{y} = \Delta v_y$$
+
+        Pour la vitesse $v_y$ :
+        $$\Delta \dot{v}_y = \frac{Mg + \Delta f}{M} \cos(\Delta \theta + \Delta \phi) - g$$
+
+        Avec l'approximation $\cos(\Delta \theta + \Delta \phi) \approx 1$, l'équation devient :
+        $$\Delta \dot{v}_y \approx \frac{Mg + \Delta f}{M} - g = g + \frac{\Delta f}{M} - g = \frac{1}{M} \Delta f$$
+
+    * **Rotation (Angle et vitesse angulaire) :**
+        $$\Delta \dot{\theta} = \Delta \omega$$
+
+        Pour l'accélération angulaire $\omega$ :
+        $$\Delta \dot{\omega} = -\frac{(Mg + \Delta f) \ell}{2J} \sin(\Delta \phi)$$
+
+        En utilisant $\sin(\Delta \phi) \approx \Delta \phi$ et en négligeant le terme du second ordre, on a :
+        $$\Delta \dot{\omega} = -\frac{Mg\ell}{2J} \Delta \phi$$
+
+    **Modèle linéarisé final :**
+
+    En remplaçant le moment d'inertie par son expression $J = \frac{1}{12}M\ell^2$, on obtient le système suivant :
+
+    $$
+    \Delta \dot{s} =
+    \begin{pmatrix}
+    \Delta \dot{x} \\ \Delta \dot{v}_x \\ \Delta \dot{y} \\ \Delta \dot{v}_y \\ \Delta \dot{\theta} \\ \Delta \dot{\omega}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+    \Delta v_x \\
+    -g \Delta \theta - g \Delta \phi \\
+    \Delta v_y \\
+    \dfrac{1}{M} \Delta f \\
+    \Delta \omega \\
+    -\dfrac{6g}{\ell} \Delta \phi
+    \end{pmatrix}
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Standard Form
 
     1. What are the matrices $A$ and $B$ associated to this linear model in standard form?
