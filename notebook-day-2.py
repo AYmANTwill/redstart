@@ -1881,7 +1881,7 @@ def _(g, l, np, plt, scipy):
         return fig
 
     manual_tuning_simulation(K)
-    return (manual_tuning_simulation,)
+    return A_lat, B_lat, manual_tuning_simulation
 
 
 @app.cell
@@ -1930,32 +1930,19 @@ def _(mo):
 
 
 @app.cell
-def _(Kd_slider, Kp_slider, np, plt, scipy):
+def _(A_lat, B_lat, Kd_slider, Kp_slider, np, plt, scipy):
     # La cellule se rafraîchit à chaque mouvement de curseur
     def direct_gains_simulation(kp, kd):
         g = 1.0
         l = 2.0
     
-        # 1. Utilisation directe des gains
+    
         K = np.array([[0.0, 0.0, kp, kd]])
     
-        # 2. Matrices du système
-        A_lat = np.array([
-            [0, 1,  0, 0],
-            [0, 0, -g, 0],
-            [0, 0,  0, 1],
-            [0, 0,  0, 0]
-        ])
-        B_lat = np.array([
-            [0],
-            [-g],
-            [0],
-            [-6*g/l]
-        ])
     
         A_cl = A_lat - B_lat @ K
     
-        # 3. Simulation
+    
         y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
     
         def fun(t, state):
@@ -1971,7 +1958,7 @@ def _(Kd_slider, Kp_slider, np, plt, scipy):
         theta_t = states[2]
         phi_t = -(K @ states)[0] 
     
-        # 4. Affichage
+    
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
     
         ax1.plot(t, theta_t, 'r')
@@ -2039,12 +2026,166 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 📝 Placement de Pôles (Pole Assignment)
+
+    Puisque le modèle latéral linéarisé est totalement contrôlable, nous pouvons utiliser la méthode de placement de pôles pour concevoir notre matrice de gain $K_{pp}$.
+
+    **Explication des paramètres de conception :**
+    1. **Stabilité Asymptotique :** Nous choisissons 4 pôles ayant une partie réelle strictement négative pour garantir la convergence de tous les états vers l'origine.
+    2. **Temps de réponse et Limite de commande :** Un système d'ordre 4 possède une inertie importante. Pour ramener la position latérale $x$ à 0 en moins de 20 secondes, il faut exiger une dynamique rapide. Nous avons choisi les pôles $P = \{-0.4, -0.5, -0.6, -0.7\}$.
+    3. **Vérification :** Ces pôles sont suffisamment négatifs (rapides) pour respecter le critère de temps, mais restent raisonnables pour éviter que la commande d'angle  $\Delta \phi$ ne sature (elle reste bien strictement inférieure à la contrainte de $\pi/2$). De plus, en choisissant des pôles purement réels, on évite d'introduire des oscillations inutiles.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, np, plt, scipy):
+    def pole_placement_simulation():
+    
+        poles_cibles = [-0.4, -0.5, -0.6, -0.7]
+    
+        res = scipy.signal.place_poles(A_lat, B_lat, poles_cibles)
+        K_pp = res.gain_matrix
+    
+        print("Matrice de gain calculée K_pp :")
+        print(np.round(K_pp, 4))
+    
+    
+        A_cl = A_lat - B_lat @ K_pp
+    
+        y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+    
+        def fun(t, state):
+            return A_cl @ state
+        
+        t_span = [0.0, 30.0]
+        result = scipy.integrate.solve_ivp(fun, t_span, y0, dense_output=True)
+    
+        t = np.linspace(t_span[0], t_span[1], 500)
+        states = result.sol(t)
+    
+        x_t = states[0]
+        theta_t = states[2]
+    
+        # Recalcul de la commande pour vérifier les contraintes (phi_t est un vecteur 1D)
+        phi_t = -(K_pp @ states)[0] 
+    
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
+    
+        ax1.plot(t, theta_t, 'r')
+        ax1.axhline(0, color='k', ls='--')
+        ax1.set_title("Angle θ(t) [rad]")
+        ax1.grid(True)
+    
+        ax2.plot(t, phi_t, 'g')
+        ax2.axhline(np.pi/2, color='r', ls=':')
+        ax2.axhline(-np.pi/2, color='r', ls=':')
+        ax2.set_title("Commande ϕ(t) [rad]")
+        ax2.grid(True)
+    
+        ax3.plot(t, x_t, 'b')
+        ax3.axhline(0, color='k', ls='--')
+        ax3.set_title("Position x(t) [m]")
+        ax3.grid(True)
+    
+        plt.tight_layout()
+        return fig
+
+    pole_placement_simulation()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Controller Tuned with Optimal Control
 
     Using optimal control, find a gain matrix $K_{oc}$ that satisfies the same set of requirements that the one defined using pole placement.
 
     Explain how you find the proper design parameters!
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 📝 Contrôle Optimal (LQR)
+
+    Contrairement au placement de pôles qui demande une intuition sur la dynamique spectrale, la commande optimale (LQR) permet de formuler le problème sous forme d'optimisation d'un compromis entre la précision du suivi (pénalisée par la matrice $Q$) et l'énergie de contrôle dépensée (pénalisée par la matrice $R$).
+
+    **Recherche des paramètres de conception :**
+    Pour trouver les matrices $Q$ et $R$, nous utilisons la **règle de Bryson**, qui relie les poids de la fonction de coût aux contraintes physiques du cahier des charges :
+    1. **Contrainte sur la commande :** Nous ne devons pas dépasser $|\phi| < \pi/2$. Nous posons donc $R = \frac{1}{(\pi/2)^2} \approx 0.4$.
+    2. **Contrainte sur l'angle :** L'angle ne doit pas dépasser $|\theta| < \pi/2$. L'élément diagonal correspondant dans $Q$ est posé à $Q_{33} = \frac{1}{(\pi/2)^2} \approx 0.4$.
+    3. **Convergence de la position :** Pour forcer $x(t) \to 0$ en moins de 20 secondes, nous devons pénaliser l'écart de position. En tolérant une déviation latérale d'environ 15 mètres pendant la manœuvre d'équilibrage, nous fixons $Q_{11} = \frac{1}{15^2} \approx 0.0044$.
+    4. Les vitesses ($\Delta v_x$ et $\Delta \omega$) sont laissées avec des poids faibles ou nuls pour donner de la flexibilité au contrôleur.
+
+    **Ajustement final :** En partant de ces valeurs de Bryson ($Q = \text{diag}([0.004, 0, 0.4, 0])$ et $R = 0.4$), une légère itération manuelle permet de durcir la pénalité sur la position pour accélérer le retour à l'origine à exactement 20s, tout en surveillant la saturation de $\phi$.
+    La matrice de gain finale $K_{oc}$ est obtenue en résolvant l'équation algébrique de Riccati (ARE). La dynamique en boucle fermée résultante est garantie asymptotiquement stable par la théorie LQR.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, np, plt, scipy):
+    def optimal_control_simulation():
+    
+        #Q = diag([poids_x, poids_vx, poids_theta, poids_omega])
+        Q = np.diag([0.01, 0.1, 1.0, 0.1]) 
+    
+        # R = poids_phi
+        R = np.array([[1.0]]) 
+    
+        #Résolution de l'équation de Riccati pour trouver le LQR
+        P = scipy.linalg.solve_continuous_are(A_lat, B_lat, Q, R)
+        K_oc = np.linalg.inv(R) @ B_lat.T @ P
+    
+        print("Matrice de gain LQR K_oc :")
+        print(np.round(K_oc, 4))
+    
+    
+        A_cl = A_lat - B_lat @ K_oc
+    
+    
+        y0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+    
+        def fun(t, state):
+            return A_cl @ state
+        
+        t_span = [0.0, 30.0]
+        result = scipy.integrate.solve_ivp(fun, t_span, y0, dense_output=True)
+    
+        t = np.linspace(t_span[0], t_span[1], 500)
+        states = result.sol(t)
+    
+        x_t = states[0]
+        theta_t = states[2]
+        phi_t = -(K_oc @ states)[0] 
+    
+   
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
+    
+        ax1.plot(t, theta_t, 'r')
+        ax1.axhline(0, color='k', ls='--')
+        ax1.set_title("Angle θ(t) [rad]")
+        ax1.grid(True)
+    
+        ax2.plot(t, phi_t, 'g')
+        ax2.axhline(np.pi/2, color='r', ls=':')
+        ax2.axhline(-np.pi/2, color='r', ls=':')
+        ax2.set_title("Commande ϕ(t) [rad]")
+        ax2.grid(True)
+    
+        ax3.plot(t, x_t, 'b')
+        ax3.axhline(0, color='k', ls='--')
+        ax3.set_title("Position x(t) [m]")
+        ax3.grid(True)
+    
+        plt.tight_layout()
+        return fig
+
+    optimal_control_simulation()
     return
 
 
