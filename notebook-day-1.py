@@ -471,7 +471,7 @@ def _(M, g, l, np, solve_ivp):
         def dynamics(t, s):
             f, phi = f_phi(t, s)
             return F(s, f, phi)
-    
+
         result = solve_ivp(dynamics, t_span, y0, method='RK45', dense_output=True, rtol=1e-8, atol=1e-8)
         return result.sol
 
@@ -954,7 +954,7 @@ def _(M, g, l, np, svg):
             points=f"{-body_w/2},{l/2} {body_w/2},{l/2} 0,{l/2 + nose_h}",
             fill="#000000",
         )()
-    
+
         if flame_length > 0:
             flame_rect = svg.rect(
                 x=-flame_w / 2,
@@ -1005,7 +1005,6 @@ def _(M, booster, g, l, mo, np, world):
         ],
         justify="space-around",
     )
-
     return
 
 
@@ -1146,7 +1145,6 @@ def _(M, booster_anim, g, l, mo, np, world):
     mo.Html(
         world([-3, 3, -2, 4], booster_anim_0())
     ).center()
-
     return
 
 
@@ -1172,19 +1170,19 @@ def _(mo):
 def _(M, booster_anim, g, l, np, redstart_solve, world):
     def make_anim(y0_state, f_phi_fn, t_span=(0.0, 5.0), view=[-3, 3, -2, 12]):
         sol = redstart_solve(t_span, y0_state, f_phi_fn)
-    
+
         # Trouver quand le booster atteint le sol
         T = t_span[1] - t_span[0]
         t_eval = np.linspace(t_span[0], t_span[1], 1000)
         y_vals = sol(t_eval)[2]
-    
+
         # Chercher le moment où y atteint l/2 
         ground_idx = np.where(y_vals <= l/2)[0]
         if len(ground_idx) > 0:
             T = t_eval[ground_idx[0]]  # s'arrêter au premier contact avec le sol
             if T == t_span[0]:  # éviter T=0
                 T = t_span[1] - t_span[0]
-    
+
         def x_fn(t):     
             if t <= T:
                 return float(sol(t)[0])
