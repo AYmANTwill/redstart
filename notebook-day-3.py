@@ -2423,7 +2423,22 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
- 
+    ### 🔓 Solution
+
+    Posons :
+    $$a = v_1 - z\dot\theta^2, \qquad b = v_2 + 2\dot{z}\dot\theta$$
+
+    On peut alors écrire :
+    $$h^{(4)} = \frac{1}{M}\begin{pmatrix}\sin\theta & \cos\theta \\ -\cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}a\\b\end{pmatrix}$$
+
+    La matrice est une matrice de rotation, donc inversible. Si on impose par analyse-synthèse que $h^{(4)} = u$, on peut écrire :
+    $$\begin{pmatrix}a\\b\end{pmatrix} = M\begin{pmatrix}\sin\theta & -\cos\theta \\ \cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}u_1\\u_2\end{pmatrix}$$
+
+    En revenant aux définitions de $a$ et $b$ :
+    $$v_1 = z\dot\theta^2 + M(u_1\sin\theta - u_2\cos\theta)$$
+    $$v_2 = -2\dot{z}\dot\theta + M(u_1\cos\theta + u_2\sin\theta)$$
+
+    Avec ce choix, le système vérifie $h^{(4)} = u$.
     """)
     return
 
