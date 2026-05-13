@@ -2319,6 +2319,47 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 🔓 Solution
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On a :
+    $$\dot{h} = \begin{pmatrix} \dot{x} - \frac{\ell}{6}\dot{\theta}\cos\theta \\ \dot{y} - \frac{\ell}{6}\dot{\theta}\sin\theta \end{pmatrix}$$
+    En dérivant une seconde fois et en utilisant les équations du mouvement, on trouve :
+    $$
+    \ddot{h} = \begin{pmatrix} - \frac{f}{M}\sin(\theta + \phi) + \frac{f}{M}\sin{\phi}\cos{\theta} + (\ell/6)\dot{\theta}^2 \sin \theta \\ \frac{f}{M}\cos(\theta + \phi) - g + \frac{f}{M}\sin{\phi}\sin{\theta} - (\ell/6)\dot{\theta}^2 \cos \theta \end{pmatrix}
+    $$
+    En développant ensuite $\sin(\theta + \phi)$ et $\cos(\theta + \phi)$ dans le calcul (on remarque d'ailleurs la pertinence du facteur $\ell/6$, qui permet de simplifier l'expression) :
+    $$
+    \ddot{h} = \begin{pmatrix} - \frac{f}{M}\sin{\theta}\cos{\phi} + (\ell/6)\dot{\theta}^2 \sin \theta \\  - g + \frac{f}{M}\cos{\phi}\cos{\theta} - (\ell/6)\dot{\theta}^2 \cos \theta \end{pmatrix}
+    $$
+    En utilisant la définition du système auxiliaire, on trouve :
+    $$f_x = -\sin\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \cos\theta\cdot\frac{M\ell v_2}{6z}$$
+    $$f_y = \cos\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \sin\theta\cdot\frac{M\ell v_2}{6z}$$
+    En inversant cette relation (en multipliant par $R(\theta - \pi/2)^{-1} = R(\pi/2 - \theta)$), la première composante donne directement :
+    $$z = f\cos\phi - \frac{M\ell\dot{\theta}^2}{6}$$
+    En substituant dans $\ddot{h}$, les termes en $v_2$ se simplifient dans l'expression. Il reste :
+    $$\boxed{\ddot{h} = \frac{z}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} - \begin{pmatrix} 0 \\ g \end{pmatrix}}$$
+    $\ddot{h}$ ne dépend donc que de $z$ et $\theta$, et non de $f$, $\phi$ et $v_2$.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+ 
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Third and Fourth-Order Derivatives
 
     Compute the third derivative $h^{(3)}$ of $h$ as a function of $\theta$ and $z$ (and constants) and then the fourth derivative $h^{(4)}$ of $h$ with respect to time as a function of $\theta$, $\dot{\theta}$, $z$, $\dot{z}$, $v$ (and constants) when the auxiliary system is on.
