@@ -2471,7 +2471,7 @@ def _(M, g, l, np):
 
         return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
 
-    return
+    return (Tr,)
 
 
 @app.cell(hide_code=True)
@@ -2548,12 +2548,7 @@ def _(M, g, l, np):
 
             return x, dx,y, dy,theta, dtheta,z, dz
 
-    return
-
-
-@app.cell
-def _():
-    return
+    return (T_inv,)
 
 
 @app.cell(hide_code=True)
@@ -2589,6 +2584,106 @@ def _(mo):
 
     that returns a function `fun` such that `fun(t)` is a value of `x, dx, y, dy, theta, dtheta, z, dz, f, phi` at time `t` that match the initial and final values provided as arguments to `compute`.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 🔓 Solution
+
+    Comme quatre dérivées sont imposées à chaque extrémité pour chacune des deux composantes de \(h\), on construit pour \(h_x\) et \(h_y\) un polynôme de degré 7 satisfaisant toutes les contraintes.
+
+    Les trajectoires obtenues pour \(h_x(t)\) et \(h_y(t)\) permettent ensuite de calculer leurs dérivées successives jusqu’à l’ordre 4.
+    En appliquant la fonction $\textbf{Tinv}$, on reconstruit alors les variables du système :
+
+    \[
+    (x,\dot x,y,\dot y,\theta,\dot\theta,z,\dot z).
+    \]
+
+    Enfin, les commandes physiques \((f,\phi)\) sont reconstruites à partir de la dynamique du système auxiliaire et des dérivées d’ordre supérieur de \(h\).
+
+    La fonction $\textbf{compute}$ retourne ainsi une fonction $\textbf{fun(t)}$ fournissant une trajectoire admissible complète reliant l’état initial à l’état final.
+    """)
+    return
+
+
+@app.cell
+def _(M, T_inv, Tr, l, np):
+    def compute(x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0, x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf, tf) :
+
+        # Conditions aux bords
+        h_x0, h_y0, dh_x0, dh_y0, d2h_x0, d2h_y0, d3h_x0, d3h_y0 = Tr(x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0)
+        h_xf, h_yf, dh_xf, dh_yf, d2h_xf, d2h_yf, d3h_xf, d3h_yf = Tr(x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf)
+
+        # Polynôme de degré 7 pour chaque composante de h
+        def poly_coeffs(h0, dh0, d2h0, d3h0, hf, dhf, d2hf, d3hf):
+            # coefficients du polynôme
+            T = tf
+            A = np.array([
+                # conditions en t=0
+                [1, 0, 0, 0, 0, 0, 0, 0],                                          # h(0)
+                [0, 1, 0, 0, 0, 0, 0, 0],                                          # dh(0)
+                [0, 0, 2, 0, 0, 0, 0, 0],                                          # d2h(0)
+                [0, 0, 0, 6, 0, 0, 0, 0],                                          # d3h(0)
+                # conditions en t=tf
+                [1, T, T**2, T**3, T**4,   T**5,    T**6,    T**7   ],          [0, 1, 2*T,  3*T**2, 4*T**3, 5*T**4, 6*T**5, 7*T**6],             # Dérivée 1
+                [0, 0, 2,    6*T,  12*T**2, 20*T**3, 30*T**4, 42*T**5],   # Dérivée 2
+                [0, 0, 0,    6,    24*T,    60*T**2, 120*T**3, 210*T**4],  # Dérivée 3
+            ])
+            b = np.array([h0, dh0, d2h0, d3h0, hf, dhf, d2hf, d3hf])
+            return np.linalg.solve(A, b)
+
+        cx = poly_coeffs(h_x0, dh_x0, d2h_x0, d3h_x0, h_xf, dh_xf, d2h_xf, d3h_xf)
+        cy = poly_coeffs(h_y0, dh_y0, d2h_y0, d3h_y0, h_yf, dh_yf, d2h_yf, d3h_yf)
+
+        def eval_poly(c, t):
+            T = np.array([t**i for i in range(8)])
+            dT = np.array([0, 1, 2*t, 3*t**2, 4*t**3, 5*t**4, 6*t**5, 7*t**6])
+            d2T = np.array([0, 0, 2, 6*t, 12*t**2, 20*t**3, 30*t**4, 42*t**5])
+            d3T = np.array([0, 0, 0, 6, 24*t, 60*t**2, 120*t**3, 210*t**4])
+            return c@T, c@dT, c@d2T, c@d3T
+
+        def fun(t):
+            # Evaluer h et ses dérivées lors de la trajectoire
+            h_x,  dh_x,  d2h_x,  d3h_x  = eval_poly(cx, t)
+            h_y,  dh_y,  d2h_y,  d3h_y  = eval_poly(cy, t)
+
+            # Remonter à l'état du booster et du système auxiliaire
+            x, dx, y, dy, theta, dtheta, z, dz = T_inv(
+                h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+            )
+
+            # Remonter à f et phi depuis z, dtheta et theta
+            # On calcule ddtheta depuis h^(4) et les polynômes
+            c4x = np.array([0,0,0,0,24, 60*t, 360*t**2, 840*t**3]) # placeholder
+        
+            # Plus proprement : dériver eval_poly une fois de plus
+            d4T = np.array([0, 0, 0, 0, 24, 120*t, 360*t**2, 840*t**3])
+            d4h_x = cx @ d4T
+            d4h_y = cy @ d4T
+
+            # Inversion de h^(4) = (1/M) * R_mat * (a, b)
+            # avec a = v1 - z*dtheta^2, b = v2 + 2*dz*dtheta
+            R_mat = np.array([
+                [ np.sin(theta),  np.cos(theta)],
+                [-np.cos(theta),  np.sin(theta)]
+            ])
+            ab = M * np.linalg.solve(R_mat, np.array([d4h_x, d4h_y]))
+            a, b = ab
+            v1 = a + z * dtheta**2
+            v2 = b - 2 * dz * dtheta
+
+            # f et phi depuis le système auxiliaire
+            comp1 =  z - M*l*dtheta**2/6      
+            comp2 =  M*l*v2/(6*z)           
+            f_val = np.sqrt(comp1**2 + comp2**2)
+            phi_val = np.arctan2(comp2, -comp1)
+
+            return x, dx, y, dy, theta, dtheta, z, dz, f_val, phi_val
+
+        return fun
+
     return
 
 
