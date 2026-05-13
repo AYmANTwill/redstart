@@ -2380,6 +2380,20 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### 🔓 Solution
+
+    En dérivant une autre fois :
+    $$h^{(3)} = \frac{\dot{z}}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} + \frac{z\dot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix}$$
+
+    En dérivant une seconde fois et en utilisant $\ddot{z} = v_1$ :
+    $$h^{(4)} = \frac{v_1}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} + \frac{2\dot{z}\dot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix} + \frac{z\ddot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix} + \frac{z\dot{\theta}^2}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix}$$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Exact Linearization
 
     Show that with yet another auxiliary system with input $u=(u_1, u_2)$ and output $v$ fed into the previous one, we can achieve the dynamics
