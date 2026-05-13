@@ -2426,7 +2426,7 @@ def _(mo):
     ### 🔓 Solution
 
     Posons :
-    $$a = v_1 - z\dot\theta^2, \qquad b = v_2 + 2\dot{z}\dot\theta$$
+    $$a = -v_1 + z\dot\theta^2, \qquad b = -v_2 - 2\dot{z}\dot\theta$$
 
     On peut alors écrire :
     $$h^{(4)} = \frac{1}{M}\begin{pmatrix}\sin\theta & \cos\theta \\ -\cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}a\\b\end{pmatrix}$$
@@ -2450,6 +2450,39 @@ def _(mo):
 
     Implement a function `Tr` of `x, dx, y, dy, theta, dtheta, z, dz` that returns `h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y`.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### 🔓 Solution
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def Tr(x, dx, y, dy, theta, dtheta, z, dz):
+        # Position de h 
+        h_x = x - (l/6) * np.sin(theta)
+        h_y = y + (l/6) * np.cos(theta)
+
+        # Dérivée première 
+        dh_x = dx - (l/6) * dtheta * np.cos(theta)
+        dh_y = dy - (l/6) * dtheta * np.sin(theta)
+
+        # Dérivée seconde 
+        # ddh = (z/M) * (-sin(theta), cos(theta)) - (0, g)
+        d2h_x = -(z/M) * np.sin(theta)
+        d2h_y =  (z/M) * np.cos(theta) - g
+
+        # Dérivée troisième 
+        d3h_x = -(dz/M) * np.sin(theta) - (z/M) * dtheta * np.cos(theta)
+        d3h_y =  (dz/M) * np.cos(theta) - (z/M) * dtheta * np.sin(theta)
+
+        return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+
     return
 
 
