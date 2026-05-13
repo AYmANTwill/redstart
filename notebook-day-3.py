@@ -2490,8 +2490,69 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
- 
+    ### 🔓 Solution
+
+    On dispose de 8 équations (les 2 composantes de $h$, $\dot{h}$, $\ddot{h}$, $h^{(3)}$) pour 8 inconnues $(x, \dot{x}, y, \dot{y}, \theta, \dot\theta, z, \dot{z})$. On peut alors résoudre dans l'ordre.
+
+    On a :
+    $$\ddot{h} + \begin{pmatrix}0 \\ g\end{pmatrix} = \frac{z}{M}\begin{pmatrix}\sin\theta \\ -\cos\theta\end{pmatrix}$$
+
+    La norme du membre gauche donne $|z|/M$, donc :
+    $$z = -M\left\|\ddot{h} + \begin{pmatrix}0 \\ g\end{pmatrix}\right\| < 0$$
+
+    On utilise la fonction atan2 (plutôt que l'arctangente, qui n'est pas utile dans notre modélisation géométrique) pour trouver l'angle $\theta$ :
+    $$\theta = \text{atan2}\!\left(\frac{M}{z}\ddot{h}_x ,\ -\frac{M}{z}(\ddot{h}_y + g)\right)$$
+
+    En utilisant la formule de $h^{(3)}$ et en prenant le produit scalaire avec $\begin{pmatrix} \sin\theta \\ -\cos\theta\end{pmatrix}$, on obtient :
+
+    $$\dot{z} = M\, h^{(3)} \cdot \begin{pmatrix} \sin\theta \\ -\cos\theta\end{pmatrix}$$
+
+    De même en prenant le produit scalaire avec $\begin{pmatrix}\cos\theta \\ \sin\theta\end{pmatrix}$ :
+
+    $$\dot\theta = \frac{M}{z}\, h^{(3)} \cdot \begin{pmatrix}\cos\theta \\ \sin\theta\end{pmatrix}$$
+
+    Et depuis la définition de $h$ on peut trouver :
+    $$x = h_x + \frac{\ell}{6}\sin\theta \qquad y = h_y - \frac{\ell}{6}\cos\theta$$
+
+    Et finalement :
+    $$\dot{x} = \dot{h}_x + \frac{\ell}{6}\dot\theta\cos\theta \qquad \dot{y} = \dot{h}_y + \frac{\ell}{6}\dot\theta\sin\theta$$
     """)
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def T_inv(h_x, h_y,dh_x, dh_y,d2h_x, d2h_y,d3h_x, d3h_y):
+            # reconstruction de z
+            z = -M * np.sqrt(d2h_x**2 + (d2h_y + g)**2)
+
+            # reconstruction de theta
+            sin_theta = M * d2h_x / z
+            cos_theta = -M * (d2h_y + g) / z
+
+            theta = np.arctan2(sin_theta, cos_theta)
+
+            # reconstruction de dz
+            dz = M * (d3h_x * sin_theta - d3h_y * cos_theta)
+
+            # reconstruction de dtheta
+            dtheta = (M / z) * (d3h_x * cos_theta + d3h_y * sin_theta)
+
+            # reconstruction de x,y
+            x = h_x + (l/6) * sin_theta
+            y = h_y - (l/6) * cos_theta
+
+            # reconstruction de dx,dy
+            dx = dh_x + (l/6) * dtheta * cos_theta
+            dy = dh_y + (l/6) * dtheta * sin_theta
+
+            return x, dx,y, dy,theta, dtheta,z, dz
+
+    return
+
+
+@app.cell
+def _():
     return
 
 
