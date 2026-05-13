@@ -2340,7 +2340,17 @@ def _(mo):
     En utilisant la définition du système auxiliaire, on a :
     $$\begin{bmatrix} f_x \\ f_y \end{bmatrix} = R\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} z - M\ell\dot{\theta}^2 / 6 \\ {M\ell v_2}/{6z} \end{bmatrix}$$
     En inversant cette relation (en multipliant par $R(\theta - \pi/2)^{-1} = R(\pi/2 - \theta)$), la première composante donne :
-    $$z = -f\cos\phi + \frac{M\ell\dot{\theta}^2}{6}$$
+
+    $$
+    \begin{align*}
+    z - \frac{M\ell\dot{\theta}^2}{6} & = f_x\sin\theta - f_y \cos\theta \\
+    &= -f \sin(\theta+\phi)\sin\theta -f\cos(\theta + \phi)\cos\theta \\
+    &= -f\sin^2(\theta)\cos\phi - f\sin(\theta)\cos(\theta)\sin(\phi) - f \cos^2(\theta)\cos\phi + f \cos(\theta)\sin(\theta)\sin(\phi) \\
+    &=-f\cos\phi\sin^2(\theta) -f\cos\phi \cos^2(\theta) \\
+    &=-f\cos\phi
+    \end{align*}
+    $$
+
     En substituant dans $\ddot{h}$, les termes en $v_2$ se simplifient dans l'expression. Il reste :
     $$\boxed{\ddot{h} = \frac{z}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix} - \begin{pmatrix} 0 \\ g \end{pmatrix}}$$
     $\ddot{h}$ ne dépend donc que de $z$ et $\theta$, et non de $f$, $\phi$ et $v_2$.
@@ -2372,10 +2382,27 @@ def _(mo):
     ### 🔓 Solution
 
     En dérivant une autre fois :
+
     $$h^{(3)} = \frac{\dot{z}}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix} + \frac{z\dot{\theta}}{M}\begin{pmatrix} \cos\theta \\ \sin\theta \end{pmatrix}$$
-    En dérivant une seconde fois et en utilisant $\ddot{z} = v_1$ :
+
+
+    En dérivant une seconde fois (des dérivées de produits) et en utilisant $\ddot{z} = v_1$ :
     $$h^{(4)} = \frac{v_1}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix} + \frac{2\dot{z}\dot{\theta}}{M}\begin{pmatrix} \cos\theta \\ \sin\theta \end{pmatrix} + \frac{z\ddot{\theta}}{M}\begin{pmatrix} \cos\theta \\ \sin\theta \end{pmatrix} + \frac{z\dot{\theta}^2}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix}$$
-    On sait que $\ddot{\theta} = v_{2}/z$ d'après la définition du système auxiliaire, on trouve alors :
+
+    On sait que $\ddot{\theta} = - \frac{6 f \sin\phi}{M \ell}$ d'après la définition du système auxiliaire, on a :
+
+    $$
+    \begin{align*}
+    \frac{M \ell v_2}{6z} &= f_x \cos \theta + f_y \sin \theta \\
+    &= -f\sin(\theta+\phi)\cos\theta +f\cos(\theta+\phi)\sin\theta \\
+    &=-f\sin(\theta)\cos(\phi)\cos(\theta) -f\sin(\phi)\cos(\theta)\cos(\theta) +  f\cos(\theta)\cos(\phi)\sin(\theta) - f\sin(\theta)\sin(\phi)\sin(\theta) \\
+    &= -f \sin(\phi) \cos^2(\theta) - f\sin(\phi)\sin^2(\theta) \\
+    &= -f \sin\phi
+    \end{align*}
+    $$
+
+    On peut alors écrire que $\ddot{\theta}=v_2 / z$ :
+
     $$
     h^{(4)}=
     \frac{1}{M}
