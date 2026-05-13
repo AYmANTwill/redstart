@@ -2387,6 +2387,21 @@ def _(mo):
 
     En dérivant une seconde fois et en utilisant $\ddot{z} = v_1$ :
     $$h^{(4)} = \frac{v_1}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} + \frac{2\dot{z}\dot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix} + \frac{z\ddot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix} + \frac{z\dot{\theta}^2}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix}$$
+
+    On sait que $\ddot{\theta} = v_{2}/z$ d'après la définition du système auxiliaire, on trouve alors :
+
+    $$
+    h^{(4)}=
+    \frac{1}{M}
+    \begin{pmatrix}
+    -(v_1-z\dot\theta^2)\sin\theta
+    -(v_2+2\dot z\dot\theta)\cos\theta
+    \\
+    (v_1-z\dot\theta^2)\cos\theta
+    -
+    (v_2+2\dot z\dot\theta)\sin\theta
+    \end{pmatrix}
+    $$
     """)
     return
 
@@ -2401,6 +2416,14 @@ def _(mo):
     $$
     h^{(4)} = u
     $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+ 
     """)
     return
 
