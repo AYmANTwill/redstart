@@ -2684,7 +2684,7 @@ def _(M, T_inv, Tr, l, np):
 
         return fun
 
-    return
+    return (compute,)
 
 
 @app.cell(hide_code=True)
@@ -2699,6 +2699,101 @@ def _(mo):
     - `tf = 10.0`.
 
     Make the graph of the relevant variables as a function of time, then make an animation out of the same result. Comment and iterate if necessary!
+    """)
+    return
+
+
+@app.cell
+def _(M, compute, g, l, np):
+    traj = compute(
+        5.0, 0.0, 20.0, -1.0, -np.pi/8, 0.0, -M*g, 0.0,
+        0.0, 0.0, 2*l/3, 0.0, 0.0, 0.0, -M*g, 0.0,
+        10.0
+    )
+
+    ts = np.linspace(0, 10, 500)
+
+    xs = []
+    ys = []
+    thetas = []
+    fs = []
+    phis = []
+    zs = []
+
+    for t in ts:
+        x, dx, y, dy, theta, dtheta, z, dz, f, phi = traj(t)
+
+        xs.append(x)
+        ys.append(y)
+        thetas.append(theta)
+        fs.append(f)
+        phis.append(phi)
+        zs.append(z)
+    return fs, phis, thetas, traj, ts, xs, ys, zs
+
+
+@app.cell
+def _(fs, phis, plt, thetas, ts, xs, ys, zs):
+    fig, axs = plt.subplots(6, 1, figsize=(8, 12))
+
+    axs[0].plot(ts, xs)
+    axs[0].set_ylabel("x")
+
+    axs[1].plot(ts, ys)
+    axs[1].set_ylabel("y")
+
+    axs[2].plot(ts, thetas)
+    axs[2].set_ylabel("theta")
+
+    axs[3].plot(ts, fs)
+    axs[3].set_ylabel("f")
+
+    axs[4].plot(ts, phis)
+    axs[4].set_ylabel("phi")
+
+    axs[5].plot(ts, zs)
+    axs[5].set_ylabel("z")
+    axs[5].set_xlabel("temps")
+
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On remarque que $z$ reste strictement négatif au cours du temps, notre inversion est donc valide.
+    """)
+    return
+
+
+@app.cell
+def _(booster_anim, mo, traj, world):
+    def make_anim_compute(traj_fn, tf, view=[-8, 8, -2, 22]):
+        def x_fn(t):
+            return float(traj_fn(t)[0])
+        def y_fn(t):
+            return float(traj_fn(t)[2])
+        def theta_fn(t):
+            return float(traj_fn(t)[4])
+        def f_fn(t):
+            return float(traj_fn(t)[8])
+        def phi_fn(t):
+            return float(traj_fn(t)[9])
+
+        anim = booster_anim(x_fn, y_fn, theta_fn, f_fn, phi_fn, T=tf)
+        return world(view, anim)
+
+    mo.Html(
+        make_anim_compute(traj, 10.0)
+    ).center()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Le booster suit bien une trajectoire lisse et est stabilisé vers sa position verticale finale.
     """)
     return
 
