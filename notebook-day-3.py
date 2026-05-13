@@ -2337,10 +2337,20 @@ def _(mo):
     $$
     \ddot{h} = \begin{pmatrix} - \frac{f}{M}\sin{\theta}\cos{\phi} + (\ell/6)\dot{\theta}^2 \sin \theta \\  - g + \frac{f}{M}\cos{\phi}\cos{\theta} - (\ell/6)\dot{\theta}^2 \cos \theta \end{pmatrix}
     $$
-    En utilisant la définition du système auxiliaire, on trouve :
-    $$f_x = -\sin\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \cos\theta\cdot\frac{M\ell v_2}{6z}$$
-    $$f_y = \cos\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \sin\theta\cdot\frac{M\ell v_2}{6z}$$
-    En inversant cette relation (en multipliant par $R(\theta - \pi/2)^{-1} = R(\pi/2 - \theta)$), la première composante donne directement :
+    En utilisant la définition du système auxiliaire, on a :
+
+    \[
+    \begin{bmatrix}
+    f_x \\
+    f_y
+    \end{bmatrix} = R\left(\theta - \frac{\pi}{2}\right)
+    \begin{bmatrix}
+    z - M\ell\dot{\theta}^2 / 6 \\
+    {M\ell v_2}/{6z}
+    \end{bmatrix}
+    \]
+
+    En inversant cette relation (en multipliant par $R(\theta - \pi/2)^{-1} = R(\pi/2 - \theta)$), la première composante donne :
     $$z = f\cos\phi - \frac{M\ell\dot{\theta}^2}{6}$$
     En substituant dans $\ddot{h}$, les termes en $v_2$ se simplifient dans l'expression. Il reste :
     $$\boxed{\ddot{h} = \frac{z}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} - \begin{pmatrix} 0 \\ g \end{pmatrix}}$$
