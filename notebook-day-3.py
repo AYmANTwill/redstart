@@ -2194,7 +2194,7 @@ def _(mo):
     Let
     $$
     R(\alpha) =
-    \begin{bmatrix} +\cos \alpha & -\sin \alpha \\ +\sin \alpha & -\cos \alpha
+    \begin{bmatrix} +\cos \alpha & -\sin \alpha \\ +\sin \alpha & \cos \alpha
     \end{bmatrix}
     $$
 
@@ -2338,22 +2338,11 @@ def _(mo):
     \ddot{h} = \begin{pmatrix} - \frac{f}{M}\sin{\theta}\cos{\phi} + (\ell/6)\dot{\theta}^2 \sin \theta \\  - g + \frac{f}{M}\cos{\phi}\cos{\theta} - (\ell/6)\dot{\theta}^2 \cos \theta \end{pmatrix}
     $$
     En utilisant la définition du système auxiliaire, on a :
-
-    \[
-    \begin{bmatrix}
-    f_x \\
-    f_y
-    \end{bmatrix} = R\left(\theta - \frac{\pi}{2}\right)
-    \begin{bmatrix}
-    z - M\ell\dot{\theta}^2 / 6 \\
-    {M\ell v_2}/{6z}
-    \end{bmatrix}
-    \]
-
+    $$\begin{bmatrix} f_x \\ f_y \end{bmatrix} = R\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} z - M\ell\dot{\theta}^2 / 6 \\ {M\ell v_2}/{6z} \end{bmatrix}$$
     En inversant cette relation (en multipliant par $R(\theta - \pi/2)^{-1} = R(\pi/2 - \theta)$), la première composante donne :
-    $$z = f\cos\phi - \frac{M\ell\dot{\theta}^2}{6}$$
+    $$z = -f\cos\phi + \frac{M\ell\dot{\theta}^2}{6}$$
     En substituant dans $\ddot{h}$, les termes en $v_2$ se simplifient dans l'expression. Il reste :
-    $$\boxed{\ddot{h} = \frac{z}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} - \begin{pmatrix} 0 \\ g \end{pmatrix}}$$
+    $$\boxed{\ddot{h} = \frac{z}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix} - \begin{pmatrix} 0 \\ g \end{pmatrix}}$$
     $\ddot{h}$ ne dépend donc que de $z$ et $\theta$, et non de $f$, $\phi$ et $v_2$.
     """)
     return
@@ -2383,22 +2372,19 @@ def _(mo):
     ### 🔓 Solution
 
     En dérivant une autre fois :
-    $$h^{(3)} = \frac{\dot{z}}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} + \frac{z\dot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix}$$
-
+    $$h^{(3)} = \frac{\dot{z}}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix} + \frac{z\dot{\theta}}{M}\begin{pmatrix} \cos\theta \\ \sin\theta \end{pmatrix}$$
     En dérivant une seconde fois et en utilisant $\ddot{z} = v_1$ :
-    $$h^{(4)} = \frac{v_1}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix} + \frac{2\dot{z}\dot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix} + \frac{z\ddot{\theta}}{M}\begin{pmatrix} -\cos\theta \\ -\sin\theta \end{pmatrix} + \frac{z\dot{\theta}^2}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix}$$
-
+    $$h^{(4)} = \frac{v_1}{M}\begin{pmatrix} \sin\theta \\ -\cos\theta \end{pmatrix} + \frac{2\dot{z}\dot{\theta}}{M}\begin{pmatrix} \cos\theta \\ \sin\theta \end{pmatrix} + \frac{z\ddot{\theta}}{M}\begin{pmatrix} \cos\theta \\ \sin\theta \end{pmatrix} + \frac{z\dot{\theta}^2}{M}\begin{pmatrix} -\sin\theta \\ \cos\theta \end{pmatrix}$$
     On sait que $\ddot{\theta} = v_{2}/z$ d'après la définition du système auxiliaire, on trouve alors :
-
     $$
     h^{(4)}=
     \frac{1}{M}
     \begin{pmatrix}
-    -(v_1-z\dot\theta^2)\sin\theta
-    -(v_2+2\dot z\dot\theta)\cos\theta
+    (v_1-z\dot\theta^2)\sin\theta
+    +(v_2+2\dot z\dot\theta)\cos\theta
     \\
-    (v_1-z\dot\theta^2)\cos\theta
-    -
+    -(v_1-z\dot\theta^2)\cos\theta
+    +
     (v_2+2\dot z\dot\theta)\sin\theta
     \end{pmatrix}
     $$
@@ -2426,15 +2412,18 @@ def _(mo):
     ### 🔓 Solution
 
     Posons :
-    $$a = -v_1 + z\dot\theta^2, \qquad b = -v_2 - 2\dot{z}\dot\theta$$
+    $$a = v_1 - z\dot\theta^2, \qquad b = v_2 + 2\dot{z}\dot\theta$$
 
     On peut alors écrire :
+
     $$h^{(4)} = \frac{1}{M}\begin{pmatrix}\sin\theta & \cos\theta \\ -\cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}a\\b\end{pmatrix}$$
 
     La matrice est une matrice de rotation, donc inversible. Si on impose par analyse-synthèse que $h^{(4)} = u$, on peut écrire :
+
     $$\begin{pmatrix}a\\b\end{pmatrix} = M\begin{pmatrix}\sin\theta & -\cos\theta \\ \cos\theta & \sin\theta\end{pmatrix}\begin{pmatrix}u_1\\u_2\end{pmatrix}$$
 
     En revenant aux définitions de $a$ et $b$ :
+
     $$v_1 = z\dot\theta^2 + M(u_1\sin\theta - u_2\cos\theta)$$
     $$v_2 = -2\dot{z}\dot\theta + M(u_1\cos\theta + u_2\sin\theta)$$
 
@@ -2468,18 +2457,17 @@ def _(M, g, l, np):
         h_x = x - (l/6) * np.sin(theta)
         h_y = y + (l/6) * np.cos(theta)
 
-        # Dérivée première 
+        # Dérivée première
         dh_x = dx - (l/6) * dtheta * np.cos(theta)
         dh_y = dy - (l/6) * dtheta * np.sin(theta)
 
         # Dérivée seconde 
-        # ddh = (z/M) * (-sin(theta), cos(theta)) - (0, g)
-        d2h_x = -(z/M) * np.sin(theta)
-        d2h_y =  (z/M) * np.cos(theta) - g
+        d2h_x =  (z/M) * np.sin(theta)
+        d2h_y = -(z/M) * np.cos(theta) - g
 
-        # Dérivée troisième 
-        d3h_x = -(dz/M) * np.sin(theta) - (z/M) * dtheta * np.cos(theta)
-        d3h_y =  (dz/M) * np.cos(theta) - (z/M) * dtheta * np.sin(theta)
+        # Dérivée troisième
+        d3h_x =  (dz/M) * np.sin(theta) + (z/M) * dtheta * np.cos(theta)
+        d3h_y = -(dz/M) * np.cos(theta) + (z/M) * dtheta * np.sin(theta)
 
         return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
 
@@ -2495,6 +2483,14 @@ def _(mo):
     Assume for the sake of simplicity that $z<0$ at all times. Show that given the values of $h$, $\dot{h}$, $\ddot{h}$ and $h^{(3)}$, one can uniquely compute the booster state (the values of $x$, $\dot{x}$, $y$, $\dot{y}$, $\theta$, $\dot{\theta}$) and auxiliary system state (the values of $z$ and $\dot{z}$).
 
     Implement the corresponding function `T_inv`.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+ 
     """)
     return
 
